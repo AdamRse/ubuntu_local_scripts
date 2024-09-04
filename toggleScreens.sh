@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# Définir les noms des sorties vidéo
+MONITOR_LEFT="DP-1"
+MONITOR_MIDDLE="HDMI-0"
+MONITOR_RIGHT="DP-3"
+
+# Définir la sortie audio HDMI pour la TV
+AUDIO_SINK="alsa_output.pci-0000_01_00.1.5.hdmi-stereo"
+
+# Vérifier l'état actuel des écrans
+IS_LEFT_ON=$(xrandr --listmonitors | grep -w $MONITOR_LEFT)
+IS_MIDDLE_ON=$(xrandr --listmonitors | grep -w $MONITOR_MIDDLE)
+
+# Fonction pour éteindre les écrans gauche et milieu, et rediriger l'audio
+turn_off_monitors() {
+    # Désactiver les écrans gauche et milieu
+    xrandr --output $MONITOR_LEFT --off
+    xrandr --output $MONITOR_MIDDLE --off
+    
+    # Mettre l'écran de droite en écran principal
+    xrandr --output $MONITOR_RIGHT --primary --auto
+    
+    # Rediriger l'audio vers la TV
+    pactl set-default-sink $AUDIO_SINK
+    
+    echo "Les écrans $MONITOR_LEFT et $MONITOR_MIDDLE ont été éteints. $MONITOR_RIGHT est maintenant l'écran principal. L'audio est redirigé vers la TV."
+}
+
+# Fonction pour allumer les écrans gauche et milieu en mode "joindre", et remettre l'écran du milieu en principal
+turn_on_monitors() {
+    # Activer l'écran gauche et le placer à gauche de l'écran du milieu
+    xrandr --output $MONITOR_LEFT --auto --left-of $MONITOR_MIDDLE
+    
+    # Activer l'écran du milieu et le placer à droite de l'écran gauche
+    xrandr --output $MONITOR_MIDDLE --primary --auto --right-of $MONITOR_LEFT
+    
+    # S'assurer que l'écran de droite est toujours en mode "joindre"
+    xrandr --output $MONITOR_RIGHT --auto --right-of $MONITOR_MIDDLE
+    
+    # Optionnel : Rediriger l'audio vers la sortie analogique ou autre
+    pactl set-default-sink alsa_output.pci-0000_00_1f.3.5.analog-stereo
+    
+    echo "Les écrans $MONITOR_LEFT et $MONITOR_MIDDLE ont été allumés et configurés en mode joindre. $MONITOR_MIDDLE est maintenant l'écran principal. L'audio est redirigé vers la sortie analogique."
+}
+
+# Basculer l'état des écrans et de l'audio
+if [ -n "$IS_LEFT_ON" ] || [ -n "$IS_MIDDLE_ON" ]; then
+    turn_off_monitors
+else
+    turn_on_monitors
+fi
