@@ -6,12 +6,15 @@ MONITOR_MIDDLE="HDMI-0"
 MONITOR_RIGHT="DP-3"
 
 # Définir la sortie audio, id obtenu via la commande pactl list short sinks
-AUDIO_SINK_TV="alsa_output.pci-0000_01_00.1.hdmi-stereo.3"
-AUDIO_SINK_DESK="alsa_output.pci-0000_00_1f.3.analog-stereo.2"
+AUDIO_SINK_TV=$(pactl list short sinks | grep hdmi | awk '{print $1}')
+AUDIO_SINK_DESK=$(pactl list short sinks | grep analog | awk '{print $1}')
 
 # Vérifier l'état actuel des écrans
 IS_LEFT_ON=$(xrandr --listmonitors | grep -w $MONITOR_LEFT)
 IS_MIDDLE_ON=$(xrandr --listmonitors | grep -w $MONITOR_MIDDLE)
+
+timeout=60
+elapsed=0
 
 # Fonction pour éteindre les écrans gauche et milieu, et rediriger l'audio
 mode_gaming_canap() {
@@ -21,13 +24,30 @@ mode_gaming_canap() {
     
     # Mettre l'écran de droite en écran principal
     xrandr --output $MONITOR_RIGHT --primary --auto
-    
-    # Rediriger l'audio vers la TV
-    pactl set-default-sink $AUDIO_SINK_TV
-    pactl set-sink-volume $AUDIO_SINK_TV 100%
 
-    sleep 0.5
+    AUDIO_SINK_TV=$(pactl list short sinks | grep hdmi | awk '{print $1}')
+    echo "audio détecté pour la TV : >$AUDIO_SINK_TV<"
+
     steam steam://open/bigpicture
+
+    # Boucle qui retente de récupérer AUDIO_SINK_TV tant qu'il n'est pas trouvé et que le délai n'est pas dépassé. A cause du splitter ou le la TV éteinte, la sortie n'est pas dispo au moment où le programme change d'output vidéo
+    while [ -z "$AUDIO_SINK_TV" ] && [ $elapsed -lt $timeout ]; do
+        # Récupérer l'ID du sink pour la TV en utilisant le mot-clé "hdmi"
+        AUDIO_SINK_TV=$(pactl list short sinks | grep hdmi | awk '{print $1}')
+        
+        # Si AUDIO_SINK_TV n'est toujours pas trouvé, attendre une seconde et incrémenter le temps écoulé
+        if [ -z "$AUDIO_SINK_TV" ]; then
+            echo "Aucune sortie HDMI détectée. Tentative à nouveau dans 1 seconde..."
+            sleep 1
+            ((elapsed+=1))
+        else
+            # Rediriger l'audio vers la TV
+            pactl set-default-sink $AUDIO_SINK_TV
+            pactl set-sink-volume $AUDIO_SINK_TV 100%
+        fi
+    done
+
+    echo "Fin de la boucle, audio trouvé : >$AUDIO_SINK_TV<"
     
     echo "Les écrans $MONITOR_LEFT et $MONITOR_MIDDLE ont été éteints. $MONITOR_RIGHT est maintenant l'écran principal. L'audio est redirigé vers la TV."
 }
