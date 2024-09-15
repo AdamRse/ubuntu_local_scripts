@@ -6,8 +6,8 @@ MONITOR_MIDDLE="HDMI-0"
 MONITOR_RIGHT="DP-3"
 
 # Définir la sortie audio, id obtenu via la commande pactl list short sinks
-AUDIO_SINK_TV="68"
-AUDIO_SINK_DESK="66"
+AUDIO_SINK_TV="alsa_output.pci-0000_01_00.1.hdmi-stereo.3"
+AUDIO_SINK_DESK="alsa_output.pci-0000_00_1f.3.analog-stereo.2"
 
 # Vérifier l'état actuel des écrans
 IS_LEFT_ON=$(xrandr --listmonitors | grep -w $MONITOR_LEFT)
