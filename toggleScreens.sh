@@ -25,6 +25,9 @@ mode_gaming_canap() {
     # Rediriger l'audio vers la TV
     pactl set-default-sink $AUDIO_SINK_TV
     pactl set-sink-volume $AUDIO_SINK_TV 100%
+
+    sleep 0.5
+    steam steam://open/bigpicture
     
     echo "Les écrans $MONITOR_LEFT et $MONITOR_MIDDLE ont été éteints. $MONITOR_RIGHT est maintenant l'écran principal. L'audio est redirigé vers la TV."
 }
@@ -42,6 +45,8 @@ mode_bureau() {
     
     # Optionnel : Rediriger l'audio vers la sortie analogique ou autre
     pactl set-default-sink $AUDIO_SINK_DESK
+
+    steam steam://close/bigpicture
     
     echo "Les écrans $MONITOR_LEFT et $MONITOR_MIDDLE ont été allumés et configurés en mode joindre. $MONITOR_MIDDLE est maintenant l'écran principal. L'audio est redirigé vers la sortie analogique."
 }
