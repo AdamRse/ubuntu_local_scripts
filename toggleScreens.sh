@@ -5,15 +5,16 @@ MONITOR_LEFT="DP-1"
 MONITOR_MIDDLE="HDMI-0"
 MONITOR_RIGHT="DP-3"
 
-# Définir la sortie audio HDMI pour la TV
-AUDIO_SINK="alsa_output.pci-0000_01_00.1.5.hdmi-stereo"
+# Définir la sortie audio, id obtenu via la commande pactl list short sinks
+AUDIO_SINK_TV="68"
+AUDIO_SINK_DESK="66"
 
 # Vérifier l'état actuel des écrans
 IS_LEFT_ON=$(xrandr --listmonitors | grep -w $MONITOR_LEFT)
 IS_MIDDLE_ON=$(xrandr --listmonitors | grep -w $MONITOR_MIDDLE)
 
 # Fonction pour éteindre les écrans gauche et milieu, et rediriger l'audio
-turn_off_monitors() {
+mode_gaming_canap() {
     # Désactiver les écrans gauche et milieu
     xrandr --output $MONITOR_LEFT --off
     xrandr --output $MONITOR_MIDDLE --off
@@ -22,13 +23,14 @@ turn_off_monitors() {
     xrandr --output $MONITOR_RIGHT --primary --auto
     
     # Rediriger l'audio vers la TV
-    pactl set-default-sink $AUDIO_SINK
+    pactl set-default-sink $AUDIO_SINK_TV
+    pactl set-sink-volume $AUDIO_SINK_TV 100%
     
     echo "Les écrans $MONITOR_LEFT et $MONITOR_MIDDLE ont été éteints. $MONITOR_RIGHT est maintenant l'écran principal. L'audio est redirigé vers la TV."
 }
 
 # Fonction pour allumer les écrans gauche et milieu en mode "joindre", et remettre l'écran du milieu en principal
-turn_on_monitors() {
+mode_bureau() {
     # Activer l'écran gauche et le placer à gauche de l'écran du milieu
     xrandr --output $MONITOR_LEFT --auto --left-of $MONITOR_MIDDLE
     
@@ -39,14 +41,14 @@ turn_on_monitors() {
     xrandr --output $MONITOR_RIGHT --auto --right-of $MONITOR_MIDDLE
     
     # Optionnel : Rediriger l'audio vers la sortie analogique ou autre
-    pactl set-default-sink alsa_output.pci-0000_00_1f.3.5.analog-stereo
+    pactl set-default-sink $AUDIO_SINK_DESK
     
     echo "Les écrans $MONITOR_LEFT et $MONITOR_MIDDLE ont été allumés et configurés en mode joindre. $MONITOR_MIDDLE est maintenant l'écran principal. L'audio est redirigé vers la sortie analogique."
 }
 
 # Basculer l'état des écrans et de l'audio
 if [ -n "$IS_LEFT_ON" ] || [ -n "$IS_MIDDLE_ON" ]; then
-    turn_off_monitors
+    mode_gaming_canap
 else
-    turn_on_monitors
+    mode_bureau
 fi
