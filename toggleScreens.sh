@@ -54,6 +54,8 @@ mode_gaming_canap() {
 
 # Fonction pour allumer les écrans gauche et milieu en mode "joindre", et remettre l'écran du milieu en principal
 mode_bureau() {
+    AUDIO_SINK_DESK=$(pactl list short sinks | grep analog | awk '{print $1}')
+
     # Activer l'écran gauche et le placer à gauche de l'écran du milieu
     xrandr --output $MONITOR_LEFT --auto --left-of $MONITOR_MIDDLE
     
@@ -66,14 +68,28 @@ mode_bureau() {
     # Optionnel : Rediriger l'audio vers la sortie analogique ou autre
     pactl set-default-sink $AUDIO_SINK_DESK
 
-    steam steam://close/bigpicture
-    
+    # Si steam est lancé, quitter le mode big pictures
+    if pgrep -x "steam" > /dev/null
+    then
+        steam steam://close/bigpicture
+    fi
+
     echo "Les écrans $MONITOR_LEFT et $MONITOR_MIDDLE ont été allumés et configurés en mode joindre. $MONITOR_MIDDLE est maintenant l'écran principal. L'audio est redirigé vers la sortie analogique."
 }
 
-# Basculer l'état des écrans et de l'audio
-if [ -n "$IS_LEFT_ON" ] || [ -n "$IS_MIDDLE_ON" ]; then
-    mode_gaming_canap
-else
+#PROGRAMME
+
+# Vérification de l'argument $1
+if [[ "$1" == "desk" ]]; then
     mode_bureau
+elif [[ "$1" == "tv" ]]; then
+    mode_gaming_canap
+else # Si aucun argument n'est passé, on fait un switch
+    if [ -n "$IS_LEFT_ON" ] || [ -n "$IS_MIDDLE_ON" ]; then
+        mode_gaming_canap
+    else
+        mode_bureau
+    fi
 fi
+
+
