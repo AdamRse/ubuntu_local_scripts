@@ -28,7 +28,13 @@ mode_gaming_canap() {
     AUDIO_SINK_TV=$(pactl list short sinks | grep hdmi | awk '{print $1}')
     echo "audio détecté pour la TV : >$AUDIO_SINK_TV<"
 
-    steam steam://open/bigpicture
+    
+    AUDIO_SINK_TV=$(pactl list short sinks | grep hdmi | awk '{print $1}')
+
+    # Rediriger l'audio vers la TV
+    pactl set-default-sink $AUDIO_SINK_TV
+    pactl set-sink-volume $AUDIO_SINK_TV 100%
+    echo "Paramétrage de la sortie audio sur $AUDIO_SINK_TV"
 
     # Boucle qui retente de récupérer AUDIO_SINK_TV tant qu'il n'est pas trouvé et que le délai n'est pas dépassé. A cause du splitter ou le la TV éteinte, la sortie n'est pas dispo au moment où le programme change d'output vidéo
     while [ -z "$AUDIO_SINK_TV" ] && [ $elapsed -lt $timeout ]; do
@@ -44,8 +50,12 @@ mode_gaming_canap() {
             # Rediriger l'audio vers la TV
             pactl set-default-sink $AUDIO_SINK_TV
             pactl set-sink-volume $AUDIO_SINK_TV 100%
+            echo "Paramétrage de la sortie audio sur $AUDIO_SINK_TV"
         fi
     done
+
+
+    steam steam://open/bigpicture
 
     echo "Fin de la boucle, audio trouvé : >$AUDIO_SINK_TV<"
     
