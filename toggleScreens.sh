@@ -101,5 +101,3 @@ else # Si aucun argument n'est passé, on fait un switch
         mode_bureau
     fi
 fi
-
-
