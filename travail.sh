@@ -51,7 +51,6 @@ xdotool windowactivate $terminal2_window
 # Lancement de Discord sur la partie gauche de l'écran de gauche (DP-1)
 discord start &
 wait_for_window "Discord"
-# sleep 2
 discord_window=$(xdotool search --name "Discord" | tail -n 1)
 xdotool windowmove $discord_window 0 0
 xdotool windowsize $discord_window 985 1080
