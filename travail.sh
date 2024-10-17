@@ -36,17 +36,20 @@ xdotool windowmove $vscode_window 1920 0  # Déplacer à nouveau pour s'assurer 
 # Lancement du premier terminal (projet Laravel)
 gnome-terminal --working-directory="$PROJECT_DIR" -- bash -c "php artisan serve; exec bash" &
 #sleep 2
-terminal1_window=$(xdotool search --name "adam@adam-Z690-UD-AX:" | tail -n 1)
-xdotool windowmove $terminal1_window 960 0
-xdotool windowsize $terminal1_window 960 540
+#wait_for_window "adam@adam-Z690-UD-AX:"
+wait_for_window "Terminal"
+terminal1_window=$(xdotool search --name "Terminal" | tail -n 1)
+xdotool windowsize $terminal1_window 990 400
+xdotool windowmove $terminal1_window 960 770
 firefox "http://127.0.0.1:8000"
 
 # Lancement du deuxième terminal (répertoire du projet)
 gnome-terminal --working-directory="$PROJECT_DIR" &
+wait_for_window "adam@adam-Z690-UD-AX:"
 #sleep 2
 terminal2_window=$(xdotool search --name "adam@adam-Z690-UD-AX:" | tail -n 1)
-xdotool windowmove $terminal2_window 960 540
-xdotool windowsize $terminal2_window 960 540
+xdotool windowsize $terminal2_window 990 800
+xdotool windowmove $terminal2_window 960 -30
 
 # Lancement de Discord sur la partie gauche de l'écran de gauche (DP-1)
 # discord &
