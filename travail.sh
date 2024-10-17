@@ -27,15 +27,12 @@ xdotool windowsize $firefox_window 100% 100%
 # Lancement de VS Code sur l'écran du milieu (HDMI-0)
 code "$PROJECT_DIR" &
 wait_for_window "Visual Studio Code"
-#sleep 2  # Attendre un peu plus pour s'assurer que VS Code est complètement chargé
 vscode_window=$(xdotool search --name "Visual Studio Code" | tail -n 1)
 xdotool windowmove $vscode_window 1920 0
-xdotool windowsize $vscode_window 2560 1080  # Ajuster à la résolution exacte de l'écran HDMI-0
-xdotool windowmove $vscode_window 1920 0  # Déplacer à nouveau pour s'assurer qu'il reste sur le bon écran
+xdotool windowactivate $vscode_window key alt+F10
 
 # Lancement du premier terminal (projet Laravel)
 gnome-terminal --working-directory="$PROJECT_DIR" -- bash -c "php artisan serve; exec bash" &
-#sleep 2
 #wait_for_window "adam@adam-Z690-UD-AX:"
 wait_for_window "Terminal"
 terminal1_window=$(xdotool search --name "Terminal" | tail -n 1)
@@ -46,17 +43,19 @@ firefox "http://127.0.0.1:8000"
 # Lancement du deuxième terminal (répertoire du projet)
 gnome-terminal --working-directory="$PROJECT_DIR" &
 wait_for_window "adam@adam-Z690-UD-AX:"
-#sleep 2
 terminal2_window=$(xdotool search --name "adam@adam-Z690-UD-AX:" | tail -n 1)
 xdotool windowsize $terminal2_window 990 800
 xdotool windowmove $terminal2_window 960 -30
+xdotool windowactivate $terminal2_window 
 
 # Lancement de Discord sur la partie gauche de l'écran de gauche (DP-1)
-# discord &
-# wait_for_window "Discord"
+discord start &
+wait_for_window "Discord"
 # sleep 2
-# discord_window=$(xdotool search --name "Discord" | tail -n 1)
-# xdotool windowmove $discord_window 0 0
-# xdotool windowsize $discord_window 960 1080
+discord_window=$(xdotool search --name "Discord" | tail -n 1)
+xdotool windowmove $discord_window 0 0
+xdotool windowsize $discord_window 985 1080
+
+xdotool windowactivate $vscode_window
 
 echo "Environnement de travail lancé avec succès !"
