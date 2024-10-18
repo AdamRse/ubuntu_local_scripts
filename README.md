@@ -1,3 +1,5 @@
+> [!NOTE]
+> Only available for linux
 # REQUIREMENTS
 
 ### toggleScreens.sh
