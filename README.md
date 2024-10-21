@@ -10,6 +10,7 @@
   ```
 ### travail.sh
 - xdotools
+- wmctrl
   ```bash
-  sudo apt install xdotool
+  sudo apt install xdotool wmctrl
   ```
