@@ -8,7 +8,7 @@ check_config_dir() {
     if [ ! -d "$CONFIG_DIR" ]; then
         mkdir -p "$CONFIG_DIR" 2>/dev/null
         if [ ! -d "$CONFIG_DIR" ]; then
-            notify-send -u critical "ToggleScreen.sh : Erreur Configuration Écrans" "Impossible de créer le dossier $CONFIG_DIR. Veuillez le créer manuellement avec : mkdir -p $CONFIG_DIR"
+            notify-send -u critical "$0 : Erreur Configuration Écrans" "Impossible de créer le dossier $CONFIG_DIR. Veuillez le créer manuellement avec : mkdir -p $CONFIG_DIR"
             exit 1
         fi
     fi
@@ -16,7 +16,7 @@ check_config_dir() {
     if [ ! -w "$CONFIG_DIR" ]; then
         chmod 755 "$CONFIG_DIR" 2>/dev/null
         if [ ! -w "$CONFIG_DIR" ]; then
-            notify-send -u critical "ToggleScreen.sh : Erreur Configuration Écrans" "Impossible de modifier les droits sur $CONFIG_DIR. Veuillez exécuter : chmod 755 $CONFIG_DIR"
+            notify-send -u critical "$0 : Erreur Configuration Écrans" "Impossible de modifier les droits sur $CONFIG_DIR. Veuillez exécuter : chmod 755 $CONFIG_DIR"
             exit 1
         fi
     fi
