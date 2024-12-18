@@ -22,6 +22,8 @@ else
 fi
 
 mkdir $DIR_LOC && echo "Création du répertoire"
+sudo chown $SUDO_USER:www-data $DIR_LOC
+sudo chmod 771 $DIR_LOC && echo "Attribution des droits"
 sudo sed -i "1a 127.0.0.1\t${URL}" /etc/hosts && echo "Ajout du DNS local"
 
 sudo cat << EOF > /etc/apache2/sites-available/$1.conf
