@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # --- A CONFIGURER ---
 # Configuration des chemins (www-data doit y avoir accès)
 # Répertoire à partire de ~/)
@@ -41,6 +40,7 @@ DIR_LOC="$DIR_DEFAULT/$1"
 # On vérifie que le site n'est pas déjà créé
 if [ -d "$DIR_LOC" ]; then
     echo "Le répertoire '$DIR_LOC' existe déjà, abandon.";
+    # sudo rm -R $DIR_LOC
     exit 1;
 fi
 
@@ -71,8 +71,12 @@ else
 fi
 
 
-
-mkdir $DIR_LOC && echo "Création du répertoire"
+if mkdir "$DIR_LOC"; then
+    echo "Création du répertoire réussie : $DIR_LOC"
+else
+    echo "Erreur lors de la création du répertoire : $DIR_LOC"
+    exit 1
+fi
 
 #On vérifie les droites d'accès de www-data
 if ! (sudo -u www-data test -r "$DIR_LOC" && sudo -u www-data test -x "$DIR_LOC"); then
@@ -99,9 +103,9 @@ sudo cat << EOF > /etc/apache2/sites-available/$1.conf
 EOF
 
 echo "Écriture du fichier de configuration";
-sudo a2ensite $1
+sudo a2ensite $1 >/dev/null
 sudo systemctl reload apache2
 echo "Mise à jour d'apache 2";
-sudo -u $SUDO_USER code $DIR_LOC
+sudo -u $SUDO_USER code "$DIR_LOC" &>/dev/null && echo "lancement de l'IDE"
 
 exit 0;
