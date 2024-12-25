@@ -1,5 +1,4 @@
 #!/bin/bash
-HOME="/home/oem"
 DIR_DEFAULT="$HOME/dev"
 
 if [[ -z "$1" ]]; then
