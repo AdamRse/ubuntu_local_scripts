@@ -1,5 +1,11 @@
 #!/bin/bash
+
+# --- A CONFIGURER ---
+# Configuration des chemins (www-data doit y avoir accès)
+# Répertoire à partire de ~/)
 DIR_HOME_DEFAULT="dev"
+# Répertoire absolu (prioritaire sur $DIR_HOME_DEFAULT, laisser vide si non utilisé)
+DIR_ABSOLUTE=""
 # Vérifie si le script est lancé avec sudo
 if [ "$(id -u)" -ne 0 ]; then
     SUDO_HOME="$HOME"
@@ -8,8 +14,25 @@ if [ "$(id -u)" -ne 0 ]; then
     SUDO_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
     USER_GROUP=$(id -gn "$SUDO_USER")
 fi
-DIR_DEFAULT="$SUDO_HOME/$DIR_HOME_DEFAULT"
 
+# Vérification si DIR_ABSOLUTE est défini ou vide
+if [ -z "$DIR_ABSOLUTE" ]; then
+    DIR_DEFAULT="$SUDO_HOME/$DIR_HOME_DEFAULT"
+else
+    DIR_DEFAULT="$DIR_ABSOLUTE"
+fi
+
+# On vérifie que le répertoire existe
+if [ ! -d "$DIR_DEFAULT" ]; then
+    echo "Le répertoire donné '$DIR_DEFAULT' n'existe pas. Il faut modifier les variables DIR_HOME_DEFAULT ou DIR_ABSOLUTE."
+    exit 1
+fi
+
+#On vérifie les droites d'accès de www-data
+if ! (sudo -u www-data test -r "$DIR_DEFAULT" && sudo -u www-data test -x "$DIR_DEFAULT"); then
+    echo "Le répertoire '$DIR_DEFAULT' existe, mais www-data n'y a pas accès en lecture écriture."
+    exit 1
+fi
 
 # Vérification de la présence du permier paramètre (nom du site)
 if [[ -z "$1" ]]; then
