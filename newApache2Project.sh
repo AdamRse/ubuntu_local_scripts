@@ -28,11 +28,6 @@ if [ ! -d "$DIR_DEFAULT" ]; then
     exit 1
 fi
 
-#On vérifie les droites d'accès de www-data
-if ! (sudo -u www-data test -r "$DIR_DEFAULT" && sudo -u www-data test -x "$DIR_DEFAULT"); then
-    echo "Le répertoire '$DIR_DEFAULT' existe, mais www-data n'y a pas accès en lecture écriture."
-    exit 1
-fi
 
 # Vérification de la présence du permier paramètre (nom du site)
 if [[ -z "$1" ]]; then
@@ -78,6 +73,13 @@ fi
 
 
 mkdir $DIR_LOC && echo "Création du répertoire"
+
+#On vérifie les droites d'accès de www-data
+if ! (sudo -u www-data test -r "$DIR_LOC" && sudo -u www-data test -x "$DIR_LOC"); then
+    echo "Le répertoire '$DIR_LOC' existe, mais www-data n'y a pas accès en lecture écriture."
+    exit 1
+fi
+
 sudo chown $SUDO_USER:www-data $DIR_LOC
 sudo chmod 771 $DIR_LOC && echo "Attribution des droits"
 sudo sed -i "1a 127.0.0.1\t${URL}" "/etc/hosts" && echo "Ajout du DNS local"
