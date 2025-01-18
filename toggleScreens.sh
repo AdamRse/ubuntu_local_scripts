@@ -1,7 +1,9 @@
 #!/bin/bash
 
-CONFIG_DIR="$HOME/.config/local_scripts"
-CONFIG_FILE="$CONFIG_DIR/.screen_config"
+CONFIG_DIR="$HOME/.config/local_scripts" # Répertoire de configuration du script
+CONFIG_DESKTOP="$CONFIG_DIR$HOME/.screen_desk.conf" # Fichier indiquant la configuration du mode desktop (travail, ou bureau)
+CONFIG_PREVIOUS="$CONFIG_DIR$HOME/.screen_prev.conf" # Fichier indiquant l'état de configuration précédent des écrans, avant un changement lié au script.
+POS_ECRAN_TV=3 # Seul écran à garder allumé en mode TV. On compte les écrans à partir de 1 et de la gauche. Ecran 1 | Ecran 2 | Ecran 3 | Ecran 4 ...
 
 # Vérifier si le dossier existe avec les bons droits
 check_config_dir() {
@@ -23,71 +25,73 @@ check_config_dir() {
 }
 
 # Fonction pour sauvegarder la configuration actuelle des écrans
-save_monitor_config() {
-    check_config_dir
-    xrandr --listmonitors > "$CONFIG_FILE"
+save_previous_config() {
+    xrandr --listmonitors > "$CONFIG_PREVIOUS"
 }
-
-# Fonction pour obtenir la position d'un moniteur
-get_monitor_position() {
-    local monitor=$1
-    grep -w "$monitor" "$CONFIG_FILE" | grep -o '[0-9]\+x[0-9]\++[0-9]\++[0-9]\+' | cut -d'+' -f2,3
+save_desktop_config() {
+    xrandr --listmonitors > "$CONFIG_DESKTOP"
 }
 
 # Fonction pour obtenir la résolution d'un moniteur
 get_monitor_resolution() {
     local monitor=$1
-    grep -w "$monitor" "$CONFIG_FILE" | grep -o '[0-9]\+x[0-9]\+' | head -1
+    grep -w "$monitor" "$CONFIG_PREVIOUS" | grep -o '[0-9]\+x[0-9]\+' | head -1
 }
 
-# Fonction pour identifier les moniteurs
-identify_monitors() {
-    # Identifier l'écran du milieu (celui en 21:9, ratio ~2.37)
-    MONITOR_MIDDLE=$(xrandr --listmonitors | grep -v "Monitors:" | awk '{split($3,res,"x"); if (res[1]/res[2] > 2.3) print $NF}')
-    
-    # Obtenir la position des autres moniteurs depuis la configuration sauvegardée
-    if [ -f "$CONFIG_FILE" ]; then
-        # Lire les positions depuis le fichier de configuration
-        middle_pos=$(get_monitor_position "$MONITOR_MIDDLE")
-        
-        # Identifier les moniteurs gauche et droit en fonction de leurs positions relatives
-        MONITOR_LEFT=$(xrandr --listmonitors | grep -v "Monitors:" | awk '{print $NF}' | while read monitor; do
-            if [ "$monitor" != "$MONITOR_MIDDLE" ]; then
-                pos=$(get_monitor_position "$monitor")
-                x_pos=$(echo "$pos" | cut -d'+' -f1)
-                middle_x=$(echo "$middle_pos" | cut -d'+' -f1)
-                if [ "$x_pos" -lt "$middle_x" ]; then
-                    echo "$monitor"
-                fi
-            fi
-        done)
-        
-        MONITOR_RIGHT=$(xrandr --listmonitors | grep -v "Monitors:" | awk '{print $NF}' | while read monitor; do
-            if [ "$monitor" != "$MONITOR_MIDDLE" ] && [ "$monitor" != "$MONITOR_LEFT" ]; then
-                echo "$monitor"
-            fi
-        done)
-    else
-        # Valeurs par défaut si pas de configuration sauvegardée
-        MONITOR_LEFT="DP-5"
-        MONITOR_RIGHT="DP-1"
-    fi
+# Fonction pour extraire la position X d'un moniteur
+get_x_position() {
+    local monitor_line="$1"
+    # Extrait la partie contenant les coordonnées (ex: 1920x1080/334+1920+0)
+    # et récupère le premier nombre après le '+'
+    echo "$monitor_line" | grep -o '[0-9]\+/[0-9]\+x[0-9]\+/[0-9]\++[0-9]\++[0-9]\+' | cut -d'+' -f2
+}
 
-    # Définir les sorties audio
-    AUDIO_SINK_TV=$(pactl list short sinks | grep hdmi | awk '{print $1}')
-    AUDIO_SINK_DESK=$(pactl list short sinks | grep analog | awk '{print $1}')
+# Fonction pour obtenir le nom du moniteur
+get_monitor_name() {
+    local monitor_line="$1"
+    echo "$monitor_line" | awk '{print $NF}'
+}
+
+# Fonction pour trier les moniteurs par position
+sort_monitors_by_position() {
+    # Lit la sortie de xrandr --listmonitors ligne par ligne
+    # Ignore la première ligne qui contient "Monitors: X"
+    xrandr --listmonitors | grep -v "Monitors:" | while read -r line; do
+        # Extrait la position X et le nom du moniteur
+        x_pos=$(get_x_position "$line")
+        name=$(get_monitor_name "$line")
+        # Affiche position et nom séparés par un espace
+        echo "$x_pos $name"
+    done | sort -n | cut -d' ' -f2  # Trie par position X et ne garde que les noms
 }
 
 # Fonction pour le mode gaming canapé
 mode_gaming_canap() {
-    identify_monitors
+    # Sauvegarder la configuration actuelle
+    save_previous_config
     
-    # Désactiver les écrans gauche et milieu
-    xrandr --output $MONITOR_LEFT --off
-    xrandr --output $MONITOR_MIDDLE --off
+    # Obtenir la liste des moniteurs triés par position
+    readarray -t SORTED_MONITORS < <(sort_monitors_by_position)
     
-    # Mettre l'écran de droite en écran principal
-    xrandr --output $MONITOR_RIGHT --primary --auto
+    # Vérifier que nous avons assez de moniteurs
+    if [ ${#SORTED_MONITORS[@]} -lt $POS_ECRAN_TV ]; then
+        notify-send -u critical "$0 : Erreur Configuration Écrans" "Position TV ($POS_ECRAN_TV) supérieure au nombre d'écrans (${#SORTED_MONITORS[@]})"
+        exit 1
+    fi
+    
+    # Index pour le moniteur TV (conversion position 1-based vers 0-based)
+    TV_INDEX=$((POS_ECRAN_TV - 1))
+    
+    # Éteindre tous les écrans sauf celui de la TV
+    for i in "${!SORTED_MONITORS[@]}"; do
+        if [ $i -eq $TV_INDEX ]; then
+            # Activer l'écran TV en tant qu'écran principal
+            xrandr --output "${SORTED_MONITORS[$i]}" --primary --auto
+        else
+            # Éteindre les autres écrans
+            xrandr --output "${SORTED_MONITORS[$i]}" --off
+        fi
+    done
 
     # Configuration audio
     AUDIO_SINK_TV=$(pactl list short sinks | grep hdmi | awk '{print $1}')
@@ -113,17 +117,15 @@ mode_gaming_canap() {
         notify-send -u critical "Erreur Audio" "Impossible de trouver la sortie HDMI"
     fi
 
+    # Lancer Steam en mode Big Picture
     steam steam://open/bigpicture
+
+    notify-send "Configuration Écrans" "Mode gaming TV activé"
 }
 
 # Fonction pour le mode bureau
 mode_bureau() {
     identify_monitors
-    
-    if [ ! -f "$CONFIG_FILE" ]; then
-        notify-send "Configuration Écrans" "Première utilisation - Sauvegarde de la configuration"
-        save_monitor_config
-    fi
     
     # Récupérer les résolutions depuis la configuration sauvegardée
     left_res=$(get_monitor_resolution "$MONITOR_LEFT")
@@ -153,12 +155,13 @@ check_config_dir
 # Programme principal
 if [[ "$1" == "desk" ]]; then
     mode_bureau
+    save_monitor_config
 elif [[ "$1" == "tv" ]]; then
     mode_gaming_canap
-    save_monitor_config
 elif [[ "$1" == "gaming_desk" ]]; then
     mode_gaming_pc
-    save_monitor_config
+elif [[ "$1" == "test" ]]; then
+    identify_monitors
 else
     IS_LEFT_ON=$(xrandr --listmonitors | grep -w "$MONITOR_LEFT")
     IS_MIDDLE_ON=$(xrandr --listmonitors | grep -w "$MONITOR_MIDDLE")
