@@ -1,5 +1,10 @@
 #!/bin/bash
+# paramètre 1 (obligatoire) : nom de domaine (par exemple dadametdev.fr)
 
+# --- A CONFIGURER ---
+# HOSTS : répertoire du fichier hosts (cache dns)
+HOSTS="/etc/hosts"
+# SEPARATOR : séparateur entre l'IP et le nom de domaine dans le fichier hosts
 SEPARATOR="\t"
 
 # On vérifie qu'on a reçu un paramètre et on le stock
@@ -31,7 +36,7 @@ echo "Adresse obtenue pour $URL : $NEW_IP"
 
 
 # Vérifier si le domaine est présent dans /etc/hosts
-if grep -qE "(\s|^)$URL(\s|$)" /etc/hosts; then
+if grep -qE "(\s|^)$URL(\s|$)" "$HOSTS"; then
     # On remplace
     echo "Le domaine '$URL' est présent dans /etc/hosts. Remplacement..."
     sudo sed -i -E "s/^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)(\s+)$URL(\s|$)/$NEW_IP\2$URL\3/" /etc/hosts
