@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SEPARATOR="\t"
+
 # On vérifie qu'on a reçu un paramètre et on le stock
 if [[ -z "$1" ]]; then
     echo "Aucune url reçu en paramètre 1, abandon.";
@@ -36,13 +38,13 @@ if grep -qE "(\s|^)$URL(\s|$)" /etc/hosts; then
 else
     #On ajoute
     echo "Le domaine '$URL' n'est PAS présent dans /etc/hosts. Ajout..."
-    
+
     # Vérifier si la ligne de commentaire # hostsUpdater existe
     if grep -q "^# hostsUpdater" /etc/hosts; then
-        echo "Ajout du domaine '$URL' sous # hostsUpdater..."
-        sudo sed -i "/^# hostsUpdater/a $NEW_IP\t$URL" /etc/hosts
+        # On ajoute la nouvelle adresse IP du nouveau nom de domaine sous le commentaire # hostsUpdater
+        sudo sed -i "/^# hostsUpdater/a $NEW_IP$SEPARATOR$URL" /etc/hosts
     else
-        echo "Ajout de # hostsUpdater et du domaine '$URL'..."
-        echo -e "# hostsUpdater\n$NEW_IP\t$URL" | sudo tee -a /etc/hosts > /dev/null
+        # On commente # hostsUpdater qui n'existe pas, et dessous on y ajoute la nouvelle adresse IP du nouveau nom de domaine
+        echo -e "\n# hostsUpdater\n$NEW_IP$SEPARATOR$URL" | sudo tee -a /etc/hosts > /dev/null
     fi
 fi
