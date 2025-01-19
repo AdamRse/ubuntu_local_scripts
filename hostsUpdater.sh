@@ -35,6 +35,7 @@ if grep -qE "(\s|^)$URL(\s|$)" /etc/hosts; then
     # On remplace
     echo "Le domaine '$URL' est présent dans /etc/hosts. Remplacement..."
     sudo sed -i -E "s/^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)(\s+)$URL(\s|$)/$NEW_IP\2$URL\3/" /etc/hosts
+    echo "$URL mis à jour avec succès !"
 else
     #On ajoute
     echo "Le domaine '$URL' n'est PAS présent dans /etc/hosts. Ajout..."
@@ -47,4 +48,5 @@ else
         # On commente # hostsUpdater qui n'existe pas, et dessous on y ajoute la nouvelle adresse IP du nouveau nom de domaine
         echo -e "\n# hostsUpdater\n$NEW_IP$SEPARATOR$URL" | sudo tee -a /etc/hosts > /dev/null
     fi
+    echo "$URL ajouté avec succès !"
 fi
