@@ -16,11 +16,33 @@ if ! [[ "$URL" =~ ^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$ ]]; then
 fi
 
 echo "Identification effectuée, le nom de domaine '$URL' est conforme.";
+# Requête API pour trouver l'IP
+REQUEST_API="http://ip-api.com/json/$URL"
+NEW_IP=$(curl -s "$REQUEST_API" | jq -r '.query')
+
+if ! [[ "$NEW_IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+    echo "Erreur de retour, impossible de trouver l'IP dans la réponse de l'API."
+    exit 1
+fi
+
+echo "Adresse obtenue pour $URL : $NEW_IP"
+
 
 # Vérifier si le domaine est présent dans /etc/hosts
 if grep -qE "(\s|^)$URL(\s|$)" /etc/hosts; then
-    echo "Le domaine '$URL' est présent dans /etc/hosts."
+    # On remplace
+    echo "Le domaine '$URL' est présent dans /etc/hosts. Remplacement..."
     sudo sed -i -E "s/^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)(\s+)$URL(\s|$)/$NEW_IP\2$URL\3/" /etc/hosts
 else
-    echo "Le domaine '$URL' n'est PAS présent dans /etc/hosts."
+    #On ajoute
+    echo "Le domaine '$URL' n'est PAS présent dans /etc/hosts. Ajout..."
+    
+    # Vérifier si la ligne de commentaire # hostsUpdater existe
+    if grep -q "^# hostsUpdater" /etc/hosts; then
+        echo "Ajout du domaine '$URL' sous # hostsUpdater..."
+        sudo sed -i "/^# hostsUpdater/a $NEW_IP\t$URL" /etc/hosts
+    else
+        echo "Ajout de # hostsUpdater et du domaine '$URL'..."
+        echo -e "# hostsUpdater\n$NEW_IP\t$URL" | sudo tee -a /etc/hosts > /dev/null
+    fi
 fi

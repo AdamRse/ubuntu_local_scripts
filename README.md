@@ -14,3 +14,9 @@
   ```bash
   sudo apt install xdotool wmctrl
   ```
+### hostsUpdater.sh
+- jq
+- curl
+  ```bash
+  sudo apt install jq curl
+  ```
