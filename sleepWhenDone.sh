@@ -2,12 +2,14 @@
 
 # Nom du fichier à vérifier
 nomFichier="Silo.S02E06.MULTi.HDR.DV.2160p.WEB.H265-FW-Wawacity.tools.mkv"
+# Valeur de comparaison (par exemple 1000 octets)
+valeurComparaison=7800000000
+# valeur tampon en secondes
+attenteTampon=120
 
 # Récupérer la taille du fichier
 taille=$(ls -l "$nomFichier" | awk '{print $5}')
 
-# Valeur de comparaison (par exemple 1000 octets)
-valeurComparaison=7800000000
 
 if [ ! -f "$nomFichier" ]; then
     echo "Erreur : Le fichier $nomFichier n'existe pas"
@@ -25,6 +27,7 @@ while true; do
 
     # Vérifier si la taille du fichier est supérieure à la valeur de comparaison
     if [ "$taille" -gt "$valeurComparaison" ]; then
+        echo "Le fichier a la taille requise, sortie de la boucle."
         break  # Sortir de la boucle
     fi
 
@@ -33,5 +36,6 @@ while true; do
     # Attendre un certain temps avant de réessayer (par exemple, 1 seconde)
     sleep 100
 done
-sleep 120
+
+sleep $attenteTampon
 systemctl suspend
