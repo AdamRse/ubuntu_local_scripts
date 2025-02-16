@@ -6,37 +6,39 @@ COPY_LOCATION="$HOME/Téléchargements/Contexte_LLM" # Dossier dans lequel sera 
 
 # Fonctions
 copy_files_with_path() { # Utilisation : copy_files_with_path "<extension>,<extension>" "<chemin_relatif>"; exemple : copy_files_with_path "js,css" "public"; ou : copy_files_with_path "php" "app/Http/Controllers"
-    local EXTENSIONS=$(get_extension_regex "$1")
+    local EXTENSIONS="$1"
     local RELATIVE_PATH="$2"
-
-    echo "Copie des fichiers *.$EXTENSIONS depuis $RELATIVE_PATH, avec la condition : $EXTENSIONS"
-    echo "find "$PROJECT_PATH/$RELATIVE_PATH" \( $EXTENSIONS \) -type f"
-    find "$PROJECT_PATH/$RELATIVE_PATH" \( $EXTENSIONS \) -type f | while read -r file; do
-        echo "fichié trouvé : $file"
-        # Calcul du chemin relatif
-        rel_path=${file#$PROJECT_PATH/}
-        
-        # Récupération du nom du fichier sans le chemin
-        filename=$(basename "$file")
-        
-        # Lecture du fichier et ajout du chemin relatif après <?php
-        awk '/<\?/{print;print "// File location in project : '"$rel_path"'";next}1' "$file" > "$COPY_LOCATION/$filename"
-    done
-}
-get_extension_regex(){
-    IFS=',' read -ra EXT_ARRAY <<< "$1"
-
-    # Construction de la condition find pour toutes les extensions
-    find_condition=""
+    echo "Copie des fichiers depuis $RELATIVE_PATH pour extensions: $EXTENSIONS"
+    
+    # Création du tableau d'extensions
+    IFS=',' read -ra EXT_ARRAY <<< "$EXTENSIONS"
+    
+    # Construction de la condition find (recherche des extensions)
+    local find_params=()
+    local first=true
+    
     for ext in "${EXT_ARRAY[@]}"; do
-        if [ -z "$find_condition" ]; then
-            find_condition="-name \"*.$ext\""
+        if $first; then
+            find_params+=(-name "*.$ext")
+            first=false
         else
-            find_condition="$find_condition -o -name \"*.$ext\""
+            find_params+=(-o -name "*.$ext")
         fi
     done
-
-    echo "$find_condition"
+    
+    find "$PROJECT_PATH/$RELATIVE_PATH" \( "${find_params[@]}" \) -type f | while read -r file; do
+        echo "Fichier trouvé : $file"
+        # Calcul du chemin relatif
+        rel_path=${file#$PROJECT_PATH/}
+        # Récupération du nom du fichier sans le chemin
+        filename=$(basename "$file")
+        # Lecture du fichier et ajout du chemin relatif après <?php
+        if [[ "$file" == *.php ]]; then
+            awk '/<\?/{print;print "// File location in project : '"$rel_path"'";next}1' "$file" > "$COPY_LOCATION/$filename"
+        else
+            cp "$file" "$COPY_LOCATION/$filename"
+        fi
+    done
 }
 
 # Vérification des conditions d'utilisation
