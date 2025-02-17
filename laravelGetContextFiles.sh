@@ -65,11 +65,11 @@ copy_files_with_path() { # Utilisation : copy_files_with_path "<extension>,<exte
         
         # Vérification si le fichier doit être ignoré
         if should_ignore_file "$rel_path"; then
-            echo "Ignoré: $rel_path"
+            echo -e "\e[33mIgnoré: $rel_path\e[0m"
             continue
         fi
         
-        echo "Copie: $rel_path"
+        echo -e "\e[32mCopie: $rel_path\e[0m"
         # Récupération du nom du fichier sans le chemin
         filename=$(basename "$file")
 
@@ -138,4 +138,4 @@ for entry in "${FILES_TO_COLLECT[@]}"; do
     copy_files_with_path "$extension" "$path"
 done
 
-echo -e "++++++++\nTerminé !"
+echo -e "\e[1;32m++++++++\nTerminé !\e[0m"
