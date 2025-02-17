@@ -3,7 +3,8 @@
 # VARIABLES PARAMETRES
 PREFIXES=("" "$HOME/dev" "$HOME" "$HOME/dev/g404") # Ajouter un préfix dans le tableau pour tester un chemin supplémentaire
 COPY_LOCATION="$HOME/Téléchargements/Contexte_LLM" # Dossier dans lequel sera copié tous les fichiers de contexte
-FILES_TO_COLLECT=( # Tableau de string qui contient les extensions et répertoires à collecter. ex : "php resources/views" va collecter tous le fichiers .php dans le répertoire resources/views du projet (récursivement)
+FILES_TO_COLLECT=( # Tableau de string qui contient les extensions et répertoires à collecter
+    # "<fini par> <dans ce chemin relatif au projet>"
     "php app"
     "php resources/views"
     "css public"
@@ -11,9 +12,33 @@ FILES_TO_COLLECT=( # Tableau de string qui contient les extensions et répertoir
     "php database/migrations"
     "php database/seeders"
 )
+FILES_TO_IGNORE=( # Tableau contenant les patterns de fichiers et répertoires à ignorer (fichier se terminant par le pattern, ou répertoire entier à ignorer)
+    "jobs_table.php"
+    "cache_table.php"
+    "Controllers/Controller.php"
+    "resources/views/components/*"
+)
 
 # Fonctions
-copy_files_with_path() { # Utilisation : copy_files_with_path "<extension>,<extension>" "<chemin_relatif>"; exemple : copy_files_with_path "js,css" "public"; ou : copy_files_with_path "php" "app/Http/Controllers"
+should_ignore_file() { # Vérifie si un fichier doit être ignoré
+    local file_path="$1"
+    
+    for pattern in "${FILES_TO_IGNORE[@]}"; do
+        # Si le pattern se termine par /* c'est un répertoire à ignorer
+        if [[ $pattern == *"/*" ]]; then
+            dir_pattern="${pattern%/*}"
+            if [[ $file_path == *"/$dir_pattern/"* ]]; then
+                return 0 # true, ignorer le fichier
+            fi
+        # Sinon c'est un pattern de fin de fichier
+        elif [[ $file_path == *"$pattern" ]]; then
+            return 0 # true, ignorer le fichier
+        fi
+    done
+    return 1 # false, ne pas ignorer le fichier
+}
+
+copy_files_with_path() { # Utilisation : copy_files_with_path "<extension>,<extension>" "<chemin_relatif>"
     local EXTENSIONS="$1"
     local RELATIVE_PATH="$2"
     echo -e "-----------\nRecherche et copie des fichiers depuis $RELATIVE_PATH pour extensions: $EXTENSIONS"
@@ -35,9 +60,16 @@ copy_files_with_path() { # Utilisation : copy_files_with_path "<extension>,<exte
     done
     
     find "$PROJECT_PATH/$RELATIVE_PATH" \( "${find_params[@]}" \) -type f | while read -r file; do
-        echo "$file"
         # Calcul du chemin relatif
         rel_path=${file#$PROJECT_PATH/}
+        
+        # Vérification si le fichier doit être ignoré
+        if should_ignore_file "$rel_path"; then
+            echo "Ignoré: $rel_path"
+            continue
+        fi
+        
+        echo "Copie: $rel_path"
         # Récupération du nom du fichier sans le chemin
         filename=$(basename "$file")
 
