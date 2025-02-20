@@ -6,11 +6,15 @@ COPY_LOCATION="$HOME/Téléchargements/Contexte_LLM" # Dossier dans lequel sera 
 FILES_TO_COLLECT=( # Tableau de string qui contient les extensions et répertoires à collecter
     # "<fini par> <dans ce chemin relatif au projet>"
     "php app"
-    "php resources/views"
-    "css public"
-    "web.php routes"
+    # "php resources/views"
+    # "css public"
+    # "web.php routes"
     "php database/migrations"
-    "php database/seeders"
+    #"php database/seeders"
+
+    "json .postman_collections"
+    "api.php routes"
+    "php config"
 )
 FILES_TO_IGNORE=( # Tableau contenant les patterns de fichiers et répertoires à ignorer (fichier se terminant par le pattern, ou répertoire entier à ignorer)
     "jobs_table.php"
