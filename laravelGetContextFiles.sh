@@ -12,12 +12,12 @@ FILES_TO_COLLECT=( # Tableau de string qui contient les extensions et répertoir
     "php database/migrations"
     #"php database/seeders"
 
-    "json .postman_collections"
     "api.php routes"
     "php config"
+    "* .context"
 )
 FILES_TO_IGNORE=( # Tableau contenant les patterns de fichiers et répertoires à ignorer (fichier se terminant par le pattern, ou répertoire entier à ignorer)
-    "jobs_table.php"
+    # "jobs_table.php"
     "cache_table.php"
     "Controllers/Controller.php"
     "resources/views/components/*"
@@ -79,22 +79,22 @@ copy_files_with_path() { # Utilisation : copy_files_with_path "<extension>,<exte
 
         if [[ "$filename" == *.blade.php ]]; then
             # Pour les fichiers Blade
-            echo -e "{{-- File location in project : $rel_path --}}\n\n" > "$COPY_LOCATION/$filename"
+            echo -e "{{-- File location in project : $rel_path --}}" > "$COPY_LOCATION/$filename"
             cat "$file" >> "$COPY_LOCATION/$filename"
         elif [[ "$filename" == *.php ]]; then
             # Pour les fichiers PHP standards
-            awk '/<\?/{print;print "// File location in project : '"$rel_path"'\n\n";next}1' "$file" > "$COPY_LOCATION/$filename"
+            awk '/<\?/{print;print "// File location in project : '"$rel_path"'";next}1' "$file" > "$COPY_LOCATION/$filename"
         elif [[ "$filename" == *.js ]]; then
             # Pour les fichiers JavaScript
-            echo -e "// File location in project : $rel_path\n\n" > "$COPY_LOCATION/$filename"
+            echo -e "// File location in project : $rel_path" > "$COPY_LOCATION/$filename"
             cat "$file" >> "$COPY_LOCATION/$filename"
         elif [[ "$filename" == *.css ]]; then
             # Pour les fichiers CSS
-            echo -e "/*\n* File location in project : $rel_path\n*/\n\n" > "$COPY_LOCATION/$filename"
+            echo -e "/*\n* File location in project : $rel_path\n*/" > "$COPY_LOCATION/$filename"
             cat "$file" >> "$COPY_LOCATION/$filename"
         else
             # Pour tous les autres types de fichiers
-            echo -e "# File location in project : $rel_path\n\n" > "$COPY_LOCATION/$filename"
+            echo -e "# File location in project : $rel_path" > "$COPY_LOCATION/$filename"
             cat "$file" >> "$COPY_LOCATION/$filename"
         fi
     done
