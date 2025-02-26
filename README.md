@@ -38,7 +38,8 @@ sudo apt install jq
 Créer un dossier ```.contexte/``` à la racine du projet pour y ajouter toutes les instructions et le contexte supplémentaire aux projet.  
 Par exemple, pour ajouter des collections postman au contexte, on peut le faire dans ```.context/postman_collections/collection1.json```.
 > [!NOTE]
-> Chaque fichier copié dans le dossier de contexte ajoute un commentaire en promière ligne signifiant le répertoire du fichier dans le projet.  
+> Chaque fichier copié dans le dossier de contexte ajoute un commentaire en promière ligne signifiant le répertoire du fichier dans le projet.
+
 Pour préciser quels fichiers ajouter au dossier de contexte, ajouter un fichier json ```.context/context-config.json``` de la forme "glob pattern" suivante :
 ```js
 {
