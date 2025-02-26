@@ -20,7 +20,13 @@ sudo apt install xdotool wmctrl
 ```bash
 sudo apt install jq curl
 ```
+### laravelGetContextFiles.sh
+- jq
+```bash
+sudo apt install jq
+```
 ### Installation complète
 ```bash
 sudo apt install xrandr pactl xdotool wmctrl jq curl
 ```
+

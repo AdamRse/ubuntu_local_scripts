@@ -1,103 +1,165 @@
 #!/bin/bash
 
+# Activer globstar pour utiliser les motifs ** (récursifs)
+shopt -s globstar
+# Activer nullglob pour que les motifs sans correspondance deviennent des chaînes vides
+shopt -s nullglob
+
 # VARIABLES PARAMETRES
-PREFIXES=("" "$HOME/dev" "$HOME" "$HOME/dev/g404") # Ajouter un préfix dans le tableau pour tester un chemin supplémentaire
+PREFIXES=("" "$HOME/dev" "$HOME" "$HOME/dev/g404") # Préfixes de chemin possibles pour le projet
 COPY_LOCATION="$HOME/Téléchargements/Contexte_LLM" # Dossier dans lequel sera copié tous les fichiers de contexte
-FILES_TO_COLLECT=( # Tableau de string qui contient les extensions et répertoires à collecter
-    # "<fini par> <dans ce chemin relatif au projet>"
-    "php app"
-    # "php resources/views"
-    # "css public"
-    # "web.php routes"
-    "php database/migrations"
-    #"php database/seeders"
-
-    "api.php routes"
-    "php config"
-    "* .context"
+# Fichier de configuration par défaut si aucun fichier .context n'est trouvé
+DEFAULT_FILES_TO_COLLECT=(
+    "app/**/*.php"
+    "database/migrations/**/*.php"
+    "routes/api.php"
+    "routes/web.php"
+    "config/**/*.php"
 )
-FILES_TO_IGNORE=( # Tableau contenant les patterns de fichiers et répertoires à ignorer (fichier se terminant par le pattern, ou répertoire entier à ignorer)
-    # "jobs_table.php"
-    "cache_table.php"
-    "Controllers/Controller.php"
-    "resources/views/components/*"
+DEFAULT_FILES_TO_IGNORE=(
+    "database/migrations/*cache_table.php"
+    "app/Http/Controllers/Controller.php"
+    "resources/views/components/**/*"
+    # Note: .context/context-config.json est ignoré automatiquement, pas besoin de l'ajouter ici
 )
 
-# Fonctions
-should_ignore_file() { # Vérifie si un fichier doit être ignoré
-    local file_path="$1"
+# Vérifie si un fichier doit être ignoré en le comparant aux motifs d'exclusion
+should_ignore_file() {
+    local rel_path="$1"
     
-    for pattern in "${FILES_TO_IGNORE[@]}"; do
-        # Si le pattern se termine par /* c'est un répertoire à ignorer
-        if [[ $pattern == *"/*" ]]; then
-            dir_pattern="${pattern%/*}"
-            if [[ $file_path == *"/$dir_pattern/"* ]]; then
-                return 0 # true, ignorer le fichier
-            fi
-        # Sinon c'est un pattern de fin de fichier
-        elif [[ $file_path == *"$pattern" ]]; then
+    # Toujours ignorer le fichier de configuration lui-même
+    if [[ "$rel_path" == ".context/context-config.json" ]]; then
+        return 0 # true, ignorer le fichier
+    fi
+    
+    for ignore_pattern in "${FILES_TO_IGNORE[@]}"; do
+        # Comparaison avec le motif d'exclusion
+        if [[ "$rel_path" == $ignore_pattern ]]; then
             return 0 # true, ignorer le fichier
         fi
     done
+    
     return 1 # false, ne pas ignorer le fichier
 }
 
-copy_files_with_path() { # Utilisation : copy_files_with_path "<extension>,<extension>" "<chemin_relatif>"
-    local EXTENSIONS="$1"
-    local RELATIVE_PATH="$2"
-    echo -e "-----------\nRecherche et copie des fichiers depuis $RELATIVE_PATH pour extensions: $EXTENSIONS"
+# Copie un fichier vers le répertoire de destination avec le format approprié
+copy_file() {
+    local file="$1"
+    local rel_path="${file#$PROJECT_PATH/}"
     
-    # Création du tableau d'extensions
-    IFS=',' read -ra EXT_ARRAY <<< "$EXTENSIONS"
+    echo -e "\e[32mCopie: $rel_path\e[0m"
+    # Récupération du nom du fichier sans le chemin
+    filename=$(basename "$file")
     
-    # Construction de la condition find (recherche des extensions)
-    local find_params=()
-    local first=true
-    
-    for ext in "${EXT_ARRAY[@]}"; do
-        if $first; then
-            find_params+=(-name "*$ext")
-            first=false
-        else
-            find_params+=(-o -name "*$ext")
-        fi
-    done
-    
-    find "$PROJECT_PATH/$RELATIVE_PATH" \( "${find_params[@]}" \) -type f | while read -r file; do
-        # Calcul du chemin relatif
-        rel_path=${file#$PROJECT_PATH/}
-        
-        # Vérification si le fichier doit être ignoré
-        if should_ignore_file "$rel_path"; then
-            echo -e "\e[33mIgnoré: $rel_path\e[0m"
-            continue
-        fi
-        
-        echo -e "\e[32mCopie: $rel_path\e[0m"
-        # Récupération du nom du fichier sans le chemin
-        filename=$(basename "$file")
+    if [[ "$filename" == *.blade.php ]]; then
+        # Pour les fichiers Blade
+        echo -e "{{-- File location in project : $rel_path --}}" > "$COPY_LOCATION/$filename"
+        cat "$file" >> "$COPY_LOCATION/$filename"
+    elif [[ "$filename" == *.php ]]; then
+        # Pour les fichiers PHP standards
+        awk '/<\?/{print;print "// File location in project : '"$rel_path"'";next}1' "$file" > "$COPY_LOCATION/$filename"
+    elif [[ "$filename" == *.js ]]; then
+        # Pour les fichiers JavaScript
+        echo -e "// File location in project : $rel_path" > "$COPY_LOCATION/$filename"
+        cat "$file" >> "$COPY_LOCATION/$filename"
+    elif [[ "$filename" == *.css ]]; then
+        # Pour les fichiers CSS
+        echo -e "/*\n* File location in project : $rel_path\n*/" > "$COPY_LOCATION/$filename"
+        cat "$file" >> "$COPY_LOCATION/$filename"
+    else
+        # Pour tous les autres types de fichiers
+        echo -e "# File location in project : $rel_path" > "$COPY_LOCATION/$filename"
+        cat "$file" >> "$COPY_LOCATION/$filename"
+    fi
+}
 
-        if [[ "$filename" == *.blade.php ]]; then
-            # Pour les fichiers Blade
-            echo -e "{{-- File location in project : $rel_path --}}" > "$COPY_LOCATION/$filename"
-            cat "$file" >> "$COPY_LOCATION/$filename"
-        elif [[ "$filename" == *.php ]]; then
-            # Pour les fichiers PHP standards
-            awk '/<\?/{print;print "// File location in project : '"$rel_path"'";next}1' "$file" > "$COPY_LOCATION/$filename"
-        elif [[ "$filename" == *.js ]]; then
-            # Pour les fichiers JavaScript
-            echo -e "// File location in project : $rel_path" > "$COPY_LOCATION/$filename"
-            cat "$file" >> "$COPY_LOCATION/$filename"
-        elif [[ "$filename" == *.css ]]; then
-            # Pour les fichiers CSS
-            echo -e "/*\n* File location in project : $rel_path\n*/" > "$COPY_LOCATION/$filename"
-            cat "$file" >> "$COPY_LOCATION/$filename"
-        else
-            # Pour tous les autres types de fichiers
-            echo -e "# File location in project : $rel_path" > "$COPY_LOCATION/$filename"
-            cat "$file" >> "$COPY_LOCATION/$filename"
-        fi
+# Collecte les fichiers en utilisant les motifs glob
+collect_files() {
+    # Mémoriser le répertoire de travail actuel
+    local current_dir=$(pwd)
+    
+    # Se déplacer dans le répertoire du projet pour que les motifs glob fonctionnent correctement
+    cd "$PROJECT_PATH"
+    
+    # Parcourir tous les motifs à collecter
+    for pattern in "${FILES_TO_COLLECT[@]}"; do
+        echo -e "-----------\nRecherche avec le motif: $pattern"
+        
+        # Utiliser directement le motif glob de bash
+        for file in $pattern; do
+            # Vérifier si c'est un fichier régulier
+            if [[ -f "$file" ]]; then
+                # Vérifier si le fichier doit être ignoré
+                if should_ignore_file "$file"; then
+                    echo -e "\e[33mIgnoré: $file\e[0m"
+                else
+                    copy_file "$PROJECT_PATH/$file"
+                fi
+            fi
+        done
     done
+    
+    # Revenir au répertoire de travail initial
+    cd "$current_dir"
+}
+
+# Fonction pour charger la configuration depuis le fichier .context/context-config.json
+load_context_config() {
+    local config_file="$PROJECT_PATH/.context/context-config.json"
+    
+    # Vérification si le fichier de configuration existe
+    if [ -f "$config_file" ]; then
+        echo "Fichier de configuration trouvé: $config_file"
+        
+        # Vérifier si jq est installé
+        if ! command -v jq >/dev/null 2>&1; then
+            echo "Erreur: L'utilitaire 'jq' n'est pas installé mais est requis pour analyser le fichier de configuration."
+            echo "Installez-le avec 'sudo apt install jq' (Debian/Ubuntu) ou 'brew install jq' (macOS)."
+            exit 1
+        fi
+        
+        # Vérifier que le fichier JSON est valide
+        if ! jq empty "$config_file" 2>/dev/null; then
+            echo -e "\e[31mErreur: Le fichier de configuration n'est pas un JSON valide.\e[0m"
+            echo "Vérifiez la syntaxe de votre fichier: $config_file"
+            exit 1
+        fi
+        
+        # Vérifier que la structure est correcte (files_to_collect doit exister)
+        if ! jq -e '.files_to_collect' "$config_file" >/dev/null 2>&1; then
+            echo -e "\e[31mErreur: Le fichier de configuration ne contient pas la clé obligatoire 'files_to_collect'.\e[0m"
+            echo "Assurez-vous que votre fichier contient au moins un tableau 'files_to_collect'."
+            exit 1
+        fi
+        
+        echo "Utilisation du fichier de configuration: $config_file"
+        
+        # Lecture des fichiers à collecter
+        mapfile -t FILES_TO_COLLECT < <(jq -r '.files_to_collect[]' "$config_file")
+        
+        # Lecture des fichiers à ignorer (si présents)
+        if jq -e '.files_to_ignore' "$config_file" >/dev/null 2>&1; then
+            mapfile -t FILES_TO_IGNORE < <(jq -r '.files_to_ignore[]' "$config_file")
+        else
+            FILES_TO_IGNORE=("${DEFAULT_FILES_TO_IGNORE[@]}")
+        fi
+        
+        # On peut aussi charger d'autres configurations si nécessaire
+        if jq -e '.copy_location' "$config_file" >/dev/null 2>&1; then
+            COPY_LOCATION=$(jq -r '.copy_location' "$config_file")
+            # Expansion de la variable $HOME si présente
+            COPY_LOCATION="${COPY_LOCATION//\$HOME/$HOME}"
+        fi
+        
+        return 0
+    else
+        echo "Aucun fichier de configuration trouvé. Utilisation de la configuration par défaut."
+    fi
+    
+    # Si on arrive ici, on utilise la configuration par défaut
+    FILES_TO_COLLECT=("${DEFAULT_FILES_TO_COLLECT[@]}")
+    FILES_TO_IGNORE=("${DEFAULT_FILES_TO_IGNORE[@]}")
+    return 1
 }
 
 # Vérification des conditions d'utilisation
@@ -128,6 +190,10 @@ if [ -z "$PROJECT_PATH" ]; then
 fi
 echo "Projet Laravel trouvé : dans $PROJECT_PATH"
 
+# Chargement de la configuration spécifique au projet
+load_context_config
+
+# Préparation du dossier de destination
 if [ -d "$COPY_LOCATION" ]; then
     echo "Nettoyage du répertoire de contexte"
     rm -rf "$COPY_LOCATION"/*
@@ -136,10 +202,7 @@ else
     mkdir -p "$COPY_LOCATION"
 fi
 
-# On parcourt le tableau FILES_TO_COLLECT en extrayant l'extension à rechercher, et le chemin où chercher
-for entry in "${FILES_TO_COLLECT[@]}"; do
-    read -r extension path <<< "$entry"
-    copy_files_with_path "$extension" "$path"
-done
+# Collecte des fichiers selon les motifs définis
+collect_files
 
 echo -e "\e[1;32m++++++++\nTerminé !\e[0m"
