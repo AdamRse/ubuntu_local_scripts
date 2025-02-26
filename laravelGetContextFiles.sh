@@ -154,12 +154,35 @@ load_context_config() {
         return 0
     else
         echo "Aucun fichier de configuration trouvé. Utilisation de la configuration par défaut."
+        set_default_collect_type
     fi
-    
-    # Si on arrive ici, on utilise la configuration par défaut
-    FILES_TO_COLLECT=("${DEFAULT_FILES_TO_COLLECT[@]}")
-    FILES_TO_IGNORE=("${DEFAULT_FILES_TO_IGNORE[@]}")
     return 1
+}
+
+set_default_collect_type() {
+    if [ -f "$PROJECT_PATH/artisan" ] && [ -d "$PROJECT_PATH/app" ]; then # Laravel détecté
+        echo "Application Laravel trouvée, application du contexte par défaut pour laravel"
+        FILES_TO_COLLECT=(
+            "app/**/*.php"
+            "database/**/*.php"
+            "routes/api.php"
+            "routes/web.php"
+            "config/**/*.php"
+            "resources/**/*.php"
+            "resources/**/*.js"
+            "resources/**/*.css"
+            ".context/**/*"
+        )
+        FILES_TO_IGNORE=(
+            "database/migrations/*cache_table.php"
+            "app/Http/Controllers/Controller.php"
+            "resources/views/components/**/*"
+        )
+    else
+        echo "Application de type inconnu, tous les fichiers du projet seront ajoutés au contexte"
+        FILES_TO_COLLECT=("${DEFAULT_FILES_TO_COLLECT[@]}")
+        FILES_TO_IGNORE=("${DEFAULT_FILES_TO_IGNORE[@]}")
+    fi
 }
 
 # Vérification des conditions d'utilisation
@@ -178,7 +201,7 @@ PATH_SENT="${PATH_SENT#/}"
 # Recherche du chemin absolu du projet et préparation du répertoire de copie
 for PREFIX in "${PREFIXES[@]}"; do
     TEST_PATH="$PREFIX/$PATH_SENT"
-    if [ -d "$TEST_PATH" ] && [ -f "$TEST_PATH/artisan" ] && [ -f "$TEST_PATH/composer.json" ] && [ -d "$TEST_PATH/app" ]; then
+    if [ -d "$TEST_PATH" ]; then
         PROJECT_PATH="$TEST_PATH"
         break
     fi
