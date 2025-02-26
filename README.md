@@ -61,10 +61,10 @@ Pour préciser quels fichiers ajouter au dossier de contexte, ajouter un fichier
 }
 ```
 > [!WARNING]
->  "files_to_ignore" est prioritaire sur "files_to_collect"
+>  ```"files_to_ignore"``` est prioritaire sur ```"files_to_collect"```
 
 > [!NOTE]
-> Le fichier context-config.json est conseillé, mais optionnel. Chaque clé du tableau est optionnelle.
+> Le fichier ```context-config.json``` est conseillé, mais optionnel. Chaque clé du tableau est optionnelle.
 
 
 ## Installation complète
