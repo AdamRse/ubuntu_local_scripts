@@ -114,7 +114,7 @@ load_context_config() {
         # Vérifier si jq est installé
         if ! command -v jq >/dev/null 2>&1; then
             echo "Erreur: L'utilitaire 'jq' n'est pas installé mais est requis pour analyser le fichier de configuration."
-            echo "Installez-le avec 'sudo apt install jq' (Debian/Ubuntu) ou 'brew install jq' (macOS)."
+            echo "Installez-le avec 'sudo apt install jq'."
             exit 1
         fi
         

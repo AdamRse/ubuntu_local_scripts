@@ -67,6 +67,15 @@ Pour préciser quels fichiers ajouter au dossier de contexte, ajouter un fichier
 > [!NOTE]
 > Le fichier ```context-config.json``` est conseillé, mais optionnel.
 
+## sleepWhenDone.sh
+Met l'ordinateur en veille lorsqu'un fichier atteint la taille voulue
+### Installation
+Aucune installation
+### Utilisation
+Mosifier les variables
+- ```nomFichier``` : Le nom et chemin du fichier ciblé
+- ```valeurComparaison``` : Taille du fichier en octet qui déclenche la veille
+- ```attenteTampon``` : Temps d'attente en secondes pour déclencher la mise en veille une fois le poids du fichier atteint
 
 ## Installation complète
 ```bash
