@@ -9,19 +9,26 @@ shopt -s nullglob
 PREFIXES=("" "$HOME/dev" "$HOME" "$HOME/dev/g404") # Préfixes de chemin possibles pour le projet
 COPY_LOCATION="$HOME/Téléchargements/Contexte_LLM" # Dossier dans lequel sera copié tous les fichiers de contexte
 # Fichier de configuration par défaut si aucun fichier .context n'est trouvé
-DEFAULT_FILES_TO_COLLECT=(
-    "app/**/*.php"
-    "database/migrations/**/*.php"
-    "routes/api.php"
-    "routes/web.php"
-    "config/**/*.php"
+FILES_TO_COLLECT=(
+    "**/*"
 )
-DEFAULT_FILES_TO_IGNORE=(
-    "database/migrations/*cache_table.php"
-    "app/Http/Controllers/Controller.php"
-    "resources/views/components/**/*"
+FILES_TO_IGNORE=(
     # Note: .context/context-config.json est ignoré automatiquement, pas besoin de l'ajouter ici
 )
+
+INIT_MODE=false
+
+# Parcourir tous les arguments après le premier (qui est le chemin du projet)
+for arg in "${@:2}"; do
+    case "$arg" in
+        -i|--init)
+            INIT_MODE=true
+            ;;
+        *)
+            echo "Option non reconnue: $arg"
+            ;;
+    esac
+done
 
 # Vérifie si un fichier doit être ignoré en le comparant aux motifs d'exclusion
 should_ignore_file() {
@@ -51,7 +58,10 @@ copy_file() {
     # Récupération du nom du fichier sans le chemin
     filename=$(basename "$file")
     
-    if [[ "$filename" == *.blade.php ]]; then
+    if [[ "$rel_path" == .context/* ]]; then
+        # Pour les fichiers du répertoire .context, copie directe sans ajout de commentaire
+        cp "$file" "$COPY_LOCATION/$filename"
+    elif [[ "$filename" == *.blade.php ]]; then
         # Pour les fichiers Blade
         echo -e "{{-- File location in project : $rel_path --}}" > "$COPY_LOCATION/$filename"
         cat "$file" >> "$COPY_LOCATION/$filename"
@@ -140,8 +150,6 @@ load_context_config() {
         # Lecture des fichiers à ignorer (si présents)
         if jq -e '.files_to_ignore' "$config_file" >/dev/null 2>&1; then
             mapfile -t FILES_TO_IGNORE < <(jq -r '.files_to_ignore[]' "$config_file")
-        else
-            FILES_TO_IGNORE=("${DEFAULT_FILES_TO_IGNORE[@]}")
         fi
         
         # On peut aussi charger d'autres configurations si nécessaire
@@ -180,9 +188,75 @@ set_default_collect_type() {
         )
     else
         echo "Application de type inconnu, tous les fichiers du projet seront ajoutés au contexte"
-        FILES_TO_COLLECT=("${DEFAULT_FILES_TO_COLLECT[@]}")
-        FILES_TO_IGNORE=("${DEFAULT_FILES_TO_IGNORE[@]}")
     fi
+}
+
+# Nouvelle fonction pour initialiser l'architecture .context
+initialize_context_structure() {
+    local context_dir="$PROJECT_PATH/.context"
+    
+    echo "Initialisation de la structure .context pour le projet: $PROJECT_PATH"
+    
+    # Création du dossier .context s'il n'existe pas
+    if [ ! -d "$context_dir" ]; then
+        echo "Création du dossier .context"
+        mkdir -p "$context_dir"
+    fi
+    
+    # Création du fichier instructions.txt
+    if [ ! -f "$context_dir/instructions.txt" ]; then
+        echo "Création du fichier instructions.txt"
+        cat > "$context_dir/instructions.txt" << EOL
+# Instructions pour le contexte LLM
+Ce fichier contient des instructions sur la façon dont le code du projet devrait être interprété.
+Vous pouvez ajouter ici des informations pertinentes pour le LLM.
+EOL
+    fi
+    
+    # Création du fichier objectif.txt
+    if [ ! -f "$context_dir/objectif.txt" ]; then
+        echo "Création du fichier objectif.txt"
+        cat > "$context_dir/objectif.txt" << EOL
+# Objectif du projet
+Décrivez ici l'objectif principal du projet et les fonctionnalités clés.
+Ces informations aideront le LLM à comprendre le contexte global.
+EOL
+    fi
+    
+    # Création du fichier context-config.json avec les valeurs par défaut
+    if [ ! -f "$context_dir/context-config.json" ]; then
+        echo "Création du fichier context-config.json"
+        echo "{" > "$context_dir/context-config.json"
+        echo "    \"files_to_collect\": [" >> "$context_dir/context-config.json"
+        
+        # Ajouter chaque pattern de collecte
+        for (( i=0; i<${#FILES_TO_COLLECT[@]}; i++ )); do
+            if [ $i -eq $(( ${#FILES_TO_COLLECT[@]} - 1 )) ]; then
+                echo "        \"${FILES_TO_COLLECT[$i]}\"" >> "$context_dir/context-config.json"
+            else
+                echo "        \"${FILES_TO_COLLECT[$i]}\"," >> "$context_dir/context-config.json"
+            fi
+        done
+        
+        echo "    ]," >> "$context_dir/context-config.json"
+        echo "    \"files_to_ignore\": [" >> "$context_dir/context-config.json"
+        
+        # Ajouter chaque pattern d'ignorance
+        for (( i=0; i<${#FILES_TO_IGNORE[@]}; i++ )); do
+            if [ $i -eq $(( ${#FILES_TO_IGNORE[@]} - 1 )) ]; then
+                echo "        \"${FILES_TO_IGNORE[$i]}\"" >> "$context_dir/context-config.json"
+            else
+                echo "        \"${FILES_TO_IGNORE[$i]}\"," >> "$context_dir/context-config.json"
+            fi
+        done
+        
+        echo "    ]," >> "$context_dir/context-config.json"
+        echo "    \"copy_location\": \"$COPY_LOCATION\"" >> "$context_dir/context-config.json"
+        echo "}" >> "$context_dir/context-config.json"
+    fi
+    
+    echo -e "\e[1;32mInitialisation terminée !\e[0m"
+    echo "Structure .context créée dans: $context_dir"
 }
 
 # Vérification des conditions d'utilisation
@@ -211,10 +285,18 @@ if [ -z "$PROJECT_PATH" ]; then
     echo "Impossible de trouver le projet $1"
     exit 1
 fi
-echo "Projet Laravel trouvé : dans $PROJECT_PATH"
+echo "Projet trouvé : dans $PROJECT_PATH"
 
 # Chargement de la configuration spécifique au projet
 load_context_config
+
+
+if [ "$INIT_MODE" = true ]; then
+    echo "Initialisation du projet"
+    initialize_context_structure
+    exit 0
+fi
+
 
 # Préparation du dossier de destination
 if [ -d "$COPY_LOCATION" ]; then
