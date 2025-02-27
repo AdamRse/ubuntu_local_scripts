@@ -104,6 +104,24 @@ copy_file() {
     local file="$1"
     local rel_path="${file#$PROJECT_PATH/}"
     local filename
+
+    # Vérifier l'existence du fichier source
+    if [ ! -f "${file}" ]; then
+        echo -e "\e[31mErreur: Le fichier source n'existe pas: ${file}\e[0m"
+        return 1
+    fi
+
+    # Vérifier l'accès en lecture au fichier source
+    if [ ! -r "${file}" ]; then
+        echo -e "\e[31mErreur: Permissions insuffisantes pour lire le fichier: ${file}\e[0m"
+        return 1
+    fi
+
+    # Vérifier si le fichier est vide
+    if [ ! -s "${file}" ]; then
+        echo -e "\e[33mIgnoré (fichier vide): ${rel_path}\e[0m"
+        return 1
+    fi
     
     echo -e "\e[32mCopie: ${rel_path}\e[0m"
     # Récupération du nom du fichier sans le chemin
