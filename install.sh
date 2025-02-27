@@ -92,10 +92,22 @@ if [ $ARCHITECTURE_PERSO ]; then
 fi
 
 
-# -- ÉTAPE 3
+# -- ÉTAPE 3 [EN COURS]
 # Installation des dépendance
 echo "Mise a jour des dépendances"
 sudo apt update
 sudo apt install -y xrandr pactl xdotool wmctrl jq curl
 sudo apt install -y php php-dom php-xml php-mysql
 sudo apt install -y 
+
+
+# -- ÉTAPE 4
+# Ajout des alias
+cat >> $HOME_FOLDER/.bashrc << 'EOF'
+# Alias local_scripts
+alias postman="nohup ~/dev/repos_externes/postman/postman-agent --no-sandbox >/dev/null 2>&1 &"
+alias a2new="sudo bash ~/dev/local_scripts/newApache2Project.sh"
+alias yt-dlp="python3 ~/dev/local_scripts/yt-dlp.py -P '~/Téléchargements/yt-dlp'"
+alias dns-update="bash ~/dev/local_scripts/hostsUpdater.sh"
+alias llm-context-file="bash ~/dev/local_scripts/llmContext.sh"
+EOF
