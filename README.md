@@ -27,7 +27,7 @@ Permet de mettre à jour le fichier /etc/hosts pour un nom de domaine qui aurait
 ```bash
 sudo apt install jq curl
 ```
-## laravelGetContextFiles.sh
+## llmContext.sh
 Pour collecter les fichiers source importants d'un projet, et les copier dans un dossier de contexte pour un LLM. Permet aussi d'ajouter des instructions et un contexte.
 ### Installation
 - jq
@@ -36,9 +36,11 @@ sudo apt install jq
 ```
 ### Utilisation
 Créer un dossier ```.contexte/``` à la racine du projet pour y ajouter toutes les instructions et le contexte supplémentaire aux projet.  
-Par exemple, pour ajouter des collections postman au contexte, on peut le faire dans ```.context/postman_collections/collection1.json```.
 > [!NOTE]
-> Chaque fichier copié dans le dossier de contexte ajoute un commentaire en promière ligne signifiant le répertoire du fichier dans le projet.
+> Vous pouvez ajouter des fichiers supplémentaires dans le dossier ```.context/```, par exemple pour ajouter des collections Postman : ```.context/postman_collections/collection1.json```.
+
+> [!NOTE]
+> Chaque fichier copié dans le dossier de contexte ajoute un commentaire en promière ligne signifiant le répertoire du fichier dans le projet (sauf les fichiers de ```.contexte/```)
 
 Pour préciser quels fichiers ajouter au dossier de contexte, ajouter un fichier json ```.context/context-config.json``` de la forme "glob pattern" suivante :
 ```js
@@ -64,8 +66,9 @@ Pour préciser quels fichiers ajouter au dossier de contexte, ajouter un fichier
 > [!WARNING]
 >  ```"files_to_ignore"``` est prioritaire sur ```"files_to_collect"```
 
-> [!NOTE]
-> Le fichier ```context-config.json``` est conseillé, mais optionnel.
+*Options disponibles* :
+- -i, --init : Initialise la structure .context dans le projet, sans faire de copie de fichiers.
+- -h, --help : Affiche l'aide
 
 ## sleepWhenDone.sh
 Met l'ordinateur en veille lorsqu'un fichier atteint la taille voulue

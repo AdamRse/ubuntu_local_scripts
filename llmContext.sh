@@ -5,8 +5,8 @@
 #              Fonctionne avec un dossier .context et un fichier context-config.json
 # Auteur:      Adam Rousselle
 # Version:     1.0
-# Date:        $(date +%Y-%m-%d)
-# Usage:       ./laravelGetContextFiles.sh <chemin_projet> [options]
+# Date:        2025-02-27
+# Usage:       ./llmContext.sh <chemin_projet> [options]
 # Options:     -i, --init   Initialise la structure .context dans le projet
 #===============================================================================
 
