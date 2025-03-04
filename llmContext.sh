@@ -4,7 +4,7 @@
 # Description: Collecte des fichiers d'un projet pour les présenter à un LLM
 #              Fonctionne avec un dossier .context et un fichier context-config.json
 # Auteur:      Adam Rousselle
-# Version:     1.0
+# Version:     1.0.1
 # Date:        2025-02-27
 # Usage:       ./llmContext.sh <chemin_projet> [options]
 # Options:     -i, --init   Initialise la structure .context dans le projet
@@ -126,6 +126,11 @@ copy_file() {
     echo -e "\e[32mCopie: ${rel_path}\e[0m"
     # Récupération du nom du fichier sans le chemin
     filename=$(basename "${file}")
+
+    # Si un fichier a le même nom ailleurs dans le projet, on utilisera le chemin relatif pour en faire un nom unique
+    if [ -f "${COPY_LOCATION}/${filename}" ]; then
+        filename="${rel_path//\//-}"
+    fi
     
     # Vérifier l'existence du fichier source
     if [ ! -f "${file}" ]; then
