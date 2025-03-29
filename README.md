@@ -80,8 +80,15 @@ Mosifier les variables
 - ```valeurComparaison``` : Taille du fichier en octet qui déclenche la veille
 - ```attenteTampon``` : Temps d'attente en secondes pour déclencher la mise en veille une fois le poids du fichier atteint
 
-## Installation complète
+### Installation complète
 ```bash
 sudo apt install xrandr pactl xdotool wmctrl jq curl
 ```
+## nasSavings.sh
 
+Pour sauvegarder des fichiers locaux sur un nas via ftp.
+### Installation
+- lftp (generally already installed)
+```bash
+sudo apt install lftp
+```
