@@ -14,7 +14,7 @@ REMOTE_VIDEOS_DIR="/Images/ALL H/videos/NEW VIDS"
 
 # Configuration des timeouts (en secondes)
 WAKE_TIMEOUT=120  # 2 minutes pour le réveil du NAS
-TRANSFER_TIMEOUT=300  # 5 minutes pour les transferts
+TRANSFER_TIMEOUT=7200  # 2 heures pour les transferts
 RETRY_INTERVAL=10  # Intervalle entre les tentatives de connexion
 
 # Créer un répertoire temporaire pour les logs
