@@ -27,7 +27,7 @@ log_message() {
     echo "$(date +"%Y-%m-%d %H:%M:%S") - $1" | tee -a "$LOG_FILE"
 }
 
-log_message "Début du processus de transfert vers le NAS..."w
+log_message "Début du processus de transfert vers le NAS..."
 
 # Vérifier si lftp est installé
 if ! command -v lftp &> /dev/null; then
@@ -139,7 +139,7 @@ wait_for_nas
 if [ $? -ne 0 ]; then
     log_message "Impossible de se connecter au NAS. Abandon du transfert."
     exit 4
-fiw
+fi
 
 # Transférer les memes
 transfer_directory "$LOCAL_MEMES_DIR" "$REMOTE_MEMES_DIR" "memes"
