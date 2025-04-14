@@ -7,9 +7,9 @@ PASS="$NAS_PASSWORD"
 NAS_ADDRESS="$NAS_FTP_ADDR"
 
 # Dossiers locaux et destinations sur le NAS
-LOCAL_MEMES_DIR="$HOME/Téléchargements/H/memes"
+LOCAL_MEMES_DIR="$NAS_LOCAL_MEMES"
 REMOTE_MEMES_DIR="/Images/ALL H/NEW H"
-LOCAL_VIDEOS_DIR="$HOME/Téléchargements/yt-dlp"
+LOCAL_VIDEOS_DIR="$NAS_LOCAL_VIDEOS"
 REMOTE_VIDEOS_DIR="/Images/ALL H/videos/NEW VIDS"
 
 # Configuration des timeouts (en secondes)
