@@ -1,8 +1,8 @@
 #!/bin/bash
 
 CONFIG_DIR="$HOME/.config/local_scripts" # Répertoire de configuration du script
-CONFIG_DESKTOP="$CONFIG_DIR$HOME/.screen_desk.conf" # Fichier indiquant la configuration du mode desktop (travail, ou bureau)
-CONFIG_PREVIOUS="$CONFIG_DIR$HOME/.screen_prev.conf" # Fichier indiquant l'état de configuration précédent des écrans, avant un changement lié au script.
+CONFIG_DESKTOP="$CONFIG_DIR/screen_desk.conf" # Fichier indiquant la configuration du mode desktop (travail, ou bureau)
+CONFIG_PREVIOUS="$CONFIG_DIR/screen_prev.conf" # Fichier indiquant l'état de configuration précédent des écrans, avant un changement lié au script.
 POS_ECRAN_TV=3 # Seul écran à garder allumé en mode TV. On compte les écrans à partir de 1 et de la gauche. Ecran 1 | Ecran 2 | Ecran 3 | Ecran 4 ...
 
 # Vérifier si le dossier existe avec les bons droits
@@ -22,6 +22,14 @@ check_config_dir() {
             exit 1
         fi
     fi
+
+    if [ ! -f "$CONFIG_DESKTOP" ]; then
+        save_desktop_config
+        if [ ! -f "$CONFIG_DESKTOP" ]; then
+            notify-send -u critical "$0 : Erreur Configuration Écrans" "La création d'un fichier de configuration a échouée ($CONFIG_DESKTOP)"
+            exit 1
+        fi
+    fi
 }
 
 # Fonction pour sauvegarder la configuration actuelle des écrans
@@ -35,7 +43,7 @@ save_desktop_config() {
 # Fonction pour obtenir la résolution d'un moniteur
 get_monitor_resolution() {
     local monitor=$1
-    grep -w "$monitor" "$CONFIG_PREVIOUS" | grep -o '[0-9]\+x[0-9]\+' | head -1
+    grep -w "$monitor" "$CONFIG_DESKTOP" | grep -o '[0-9]\+x[0-9]\+' | head -1
 }
 
 # Fonction pour extraire la position X d'un moniteur
@@ -125,17 +133,71 @@ mode_gaming_canap() {
 
 # Fonction pour le mode bureau
 mode_bureau() {
-    identify_monitors
+    save_previous_config
+
     
-    # Récupérer les résolutions depuis la configuration sauvegardée
-    left_res=$(get_monitor_resolution "$MONITOR_LEFT")
-    middle_res=$(get_monitor_resolution "$MONITOR_MIDDLE")
-    right_res=$(get_monitor_resolution "$MONITOR_RIGHT")
-    
-    # Configurer les écrans selon la disposition sauvegardée
-    xrandr --output $MONITOR_LEFT --mode $left_res --auto --left-of $MONITOR_MIDDLE
-    xrandr --output $MONITOR_MIDDLE --primary --mode $middle_res --auto --right-of $MONITOR_LEFT
-    xrandr --output $MONITOR_RIGHT --mode $right_res --auto --right-of $MONITOR_MIDDLE
+    # # Configurer les écrans selon la disposition sauvegardée
+    # xrandr --output $MONITOR_LEFT --mode $left_res --auto --left-of $MONITOR_MIDDLE
+    # xrandr --output $MONITOR_MIDDLE --primary --mode $middle_res --auto --right-of $MONITOR_LEFT
+    # xrandr --output $MONITOR_RIGHT --mode $right_res --auto --right-of $MONITOR_MIDDLE
+
+    # Lire le fichier de configuration desktop
+    if [ ! -f "$CONFIG_DESKTOP" ]; then
+        notify-send -u critical "$0 : Erreur Configuration Écrans" "Fichier de configuration desktop introuvable ($CONFIG_DESKTOP)"
+        exit 1
+    fi
+
+    # Variables pour construire la commande xrandr
+    PRIMARY_MONITOR=""
+    XRANDR_CMD="xrandr"
+    PREV_MONITOR=""
+    PREV_POS=""
+
+    # Traiter chaque ligne de la configuration desktop (en ignorant la première ligne "Monitors: X")
+    grep -v "Monitors:" "$CONFIG_DESKTOP" | while read -r line; do
+        # Extraire le nom du moniteur
+        monitor=$(echo "$line" | awk '{print $NF}')
+        
+        # Vérifier si c'est le moniteur principal (contient *)
+        if echo "$line" | grep -q '\*'; then
+            PRIMARY_MONITOR=$monitor
+        fi
+        
+        # Extraire la résolution
+        resolution=$(get_monitor_resolution "$monitor")
+        
+        # Extraire la position X
+        x_pos=$(get_x_position "$line")
+        
+        # Construire la commande xrandr
+        if [ -z "$PREV_MONITOR" ]; then
+            # Premier moniteur
+            XRANDR_CMD+=" --output $monitor --mode $resolution --pos ${x_pos}x0"
+            if [ -n "$PRIMARY_MONITOR" ] && [ "$monitor" = "$PRIMARY_MONITOR" ]; then
+                XRANDR_CMD+=" --primary"
+            fi
+        else
+            # Moniteurs suivants
+            XRANDR_CMD+=" --output $monitor --mode $resolution --pos ${x_pos}x0"
+            if [ -n "$PRIMARY_MONITOR" ] && [ "$monitor" = "$PRIMARY_MONITOR" ]; then
+                XRANDR_CMD+=" --primary"
+            fi
+        fi
+        
+        PREV_MONITOR=$monitor
+        PREV_POS=$x_pos
+    done
+
+    # Activer tous les moniteurs et éteindre ceux qui ne sont pas dans la config
+    ALL_MONITORS=$(xrandr --query | grep " connected" | awk '{print $1}')
+    for mon in $ALL_MONITORS; do
+        if ! grep -q "$mon" "$CONFIG_DESKTOP"; then
+            XRANDR_CMD+=" --output $mon --off"
+        fi
+    done
+
+    # Exécuter la commande xrandr
+    eval "$XRANDR_CMD"
     
     # Configuration audio
     AUDIO_SINK_DESK=$(pactl list short sinks | grep analog | awk '{print $1}')
@@ -149,26 +211,33 @@ mode_bureau() {
     notify-send "Configuration Écrans" "Mode bureau activé"
 }
 
+mode_gaming_pc() {
+    save_previous_config
+
+    # A coder, éteindre les écrans de gauche et de droite, harder le principal, au milieu
+}
+
 # Vérifier le dossier de configuration au démarrage
 check_config_dir
 
 # Programme principal
 if [[ "$1" == "desk" ]]; then
     mode_bureau
-    save_monitor_config
 elif [[ "$1" == "tv" ]]; then
     mode_gaming_canap
 elif [[ "$1" == "gaming_desk" ]]; then
     mode_gaming_pc
+elif [[ "$1" == "save_monitors" ]]; then
+    save_desktop_config
 elif [[ "$1" == "test" ]]; then
-    identify_monitors
-else
+    echo -e "mode test\n--------------------"
+    get_monitor_resolution HDMI-0
+else # togle
     IS_LEFT_ON=$(xrandr --listmonitors | grep -w "$MONITOR_LEFT")
     IS_MIDDLE_ON=$(xrandr --listmonitors | grep -w "$MONITOR_MIDDLE")
     
     if [ -n "$IS_LEFT_ON" ] || [ -n "$IS_MIDDLE_ON" ]; then
         mode_gaming_canap
-        save_monitor_config
     else
         mode_bureau
     fi
