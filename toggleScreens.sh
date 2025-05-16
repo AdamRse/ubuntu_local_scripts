@@ -135,69 +135,76 @@ mode_gaming_canap() {
 mode_bureau() {
     save_previous_config
 
+    xrandr --output "DP-1" --mode "1920x1080" --auto --left-of "HDMI-0"
+    xrandr --output "HDMI-0" --primary --mode "2560x1080" --auto --right-of "DP-1"
+    xrandr --output "DP-5" --mode "1920x1080" --auto --right-of "HDMI-0"
     
     # # Configurer les écrans selon la disposition sauvegardée
     # xrandr --output $MONITOR_LEFT --mode $left_res --auto --left-of $MONITOR_MIDDLE
     # xrandr --output $MONITOR_MIDDLE --primary --mode $middle_res --auto --right-of $MONITOR_LEFT
     # xrandr --output $MONITOR_RIGHT --mode $right_res --auto --right-of $MONITOR_MIDDLE
 
-    # Lire le fichier de configuration desktop
-    if [ ! -f "$CONFIG_DESKTOP" ]; then
-        notify-send -u critical "$0 : Erreur Configuration Écrans" "Fichier de configuration desktop introuvable ($CONFIG_DESKTOP)"
-        exit 1
-    fi
+    # IA -----------------------------
 
-    # Variables pour construire la commande xrandr
-    PRIMARY_MONITOR=""
-    XRANDR_CMD="xrandr"
-    PREV_MONITOR=""
-    PREV_POS=""
+    # # Lire le fichier de configuration desktop
+    # if [ ! -f "$CONFIG_DESKTOP" ]; then
+    #     notify-send -u critical "$0 : Erreur Configuration Écrans" "Fichier de configuration desktop introuvable ($CONFIG_DESKTOP)"
+    #     exit 1
+    # fi
 
-    # Traiter chaque ligne de la configuration desktop (en ignorant la première ligne "Monitors: X")
-    grep -v "Monitors:" "$CONFIG_DESKTOP" | while read -r line; do
-        # Extraire le nom du moniteur
-        monitor=$(echo "$line" | awk '{print $NF}')
-        
-        # Vérifier si c'est le moniteur principal (contient *)
-        if echo "$line" | grep -q '\*'; then
-            PRIMARY_MONITOR=$monitor
-        fi
-        
-        # Extraire la résolution
-        resolution=$(get_monitor_resolution "$monitor")
-        
-        # Extraire la position X
-        x_pos=$(get_x_position "$line")
-        
-        # Construire la commande xrandr
-        if [ -z "$PREV_MONITOR" ]; then
-            # Premier moniteur
-            XRANDR_CMD+=" --output $monitor --mode $resolution --pos ${x_pos}x0"
-            if [ -n "$PRIMARY_MONITOR" ] && [ "$monitor" = "$PRIMARY_MONITOR" ]; then
-                XRANDR_CMD+=" --primary"
-            fi
-        else
-            # Moniteurs suivants
-            XRANDR_CMD+=" --output $monitor --mode $resolution --pos ${x_pos}x0"
-            if [ -n "$PRIMARY_MONITOR" ] && [ "$monitor" = "$PRIMARY_MONITOR" ]; then
-                XRANDR_CMD+=" --primary"
-            fi
-        fi
-        
-        PREV_MONITOR=$monitor
-        PREV_POS=$x_pos
-    done
+    # # Variables pour construire la commande xrandr
+    # PRIMARY_MONITOR=""
+    # XRANDR_CMD="xrandr"
+    # PREV_MONITOR=""
+    # PREV_POS=""
 
-    # Activer tous les moniteurs et éteindre ceux qui ne sont pas dans la config
-    ALL_MONITORS=$(xrandr --query | grep " connected" | awk '{print $1}')
-    for mon in $ALL_MONITORS; do
-        if ! grep -q "$mon" "$CONFIG_DESKTOP"; then
-            XRANDR_CMD+=" --output $mon --off"
-        fi
-    done
+    # # Traiter chaque ligne de la configuration desktop (en ignorant la première ligne "Monitors: X")
+    # grep -v "Monitors:" "$CONFIG_DESKTOP" | while read -r line; do
+    #     # Extraire le nom du moniteur
+    #     monitor=$(echo "$line" | awk '{print $NF}')
+        
+    #     # Vérifier si c'est le moniteur principal (contient *)
+    #     if echo "$line" | grep -q '\*'; then
+    #         PRIMARY_MONITOR=$monitor
+    #     fi
+        
+    #     # Extraire la résolution
+    #     resolution=$(get_monitor_resolution "$monitor")
+        
+    #     # Extraire la position X
+    #     x_pos=$(get_x_position "$line")
+        
+    #     # Construire la commande xrandr
+    #     if [ -z "$PREV_MONITOR" ]; then
+    #         # Premier moniteur
+    #         XRANDR_CMD+=" --output $monitor --mode $resolution --pos ${x_pos}x0"
+    #         if [ -n "$PRIMARY_MONITOR" ] && [ "$monitor" = "$PRIMARY_MONITOR" ]; then
+    #             XRANDR_CMD+=" --primary"
+    #         fi
+    #     else
+    #         # Moniteurs suivants
+    #         XRANDR_CMD+=" --output $monitor --mode $resolution --pos ${x_pos}x0"
+    #         if [ -n "$PRIMARY_MONITOR" ] && [ "$monitor" = "$PRIMARY_MONITOR" ]; then
+    #             XRANDR_CMD+=" --primary"
+    #         fi
+    #     fi
+        
+    #     PREV_MONITOR=$monitor
+    #     PREV_POS=$x_pos
+    # done
 
-    # Exécuter la commande xrandr
-    eval "$XRANDR_CMD"
+    # # Activer tous les moniteurs et éteindre ceux qui ne sont pas dans la config
+    # ALL_MONITORS=$(xrandr --query | grep " connected" | awk '{print $1}')
+    # for mon in $ALL_MONITORS; do
+    #     if ! grep -q "$mon" "$CONFIG_DESKTOP"; then
+    #         XRANDR_CMD+=" --output $mon --off"
+    #     fi
+    # done
+
+    # # Exécuter la commande xrandr
+    # eval "$XRANDR_CMD"
+
+    # FIN IA -----------------------------
     
     # Configuration audio
     AUDIO_SINK_DESK=$(pactl list short sinks | grep analog | awk '{print $1}')
