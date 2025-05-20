@@ -107,7 +107,7 @@ mode_gaming_canap() {
     timeout=60
     elapsed=0
     
-    while [ -z "$AUDIO_SINK_TV" ] && [ $elapsed -lt $timeout ]; do
+    while true ; do
         AUDIO_SINK_TV=$(pactl list short sinks | grep hdmi | awk '{print $1}')
         
         if [ -z "$AUDIO_SINK_TV" ]; then
@@ -118,6 +118,11 @@ mode_gaming_canap() {
             pactl set-default-sink $AUDIO_SINK_TV
             pactl set-sink-volume $AUDIO_SINK_TV 100%
             notify-send "Configuration Audio" "Sortie HDMI configurée"
+            break
+        fi
+
+        if [ $elapsed -ge $timeout ]; then
+            break
         fi
     done
 
