@@ -130,6 +130,9 @@ mode_gaming_canap() {
         notify-send -u critical "Erreur Audio" "Impossible de trouver la sortie HDMI"
     fi
 
+    #Enlève l'arrêt de l'écran inactif (parfois à cause de cinématiques l'écran s'éteinds)
+    gsettings set org.cinnamon.settings-daemon.plugins.power sleep-display-ac 0
+
     # Lancer Steam en mode Big Picture
     steam steam://open/bigpicture
 
@@ -219,6 +222,9 @@ mode_bureau() {
     if pgrep -x "steam" > /dev/null; then
         steam steam://close/bigpicture
     fi
+
+    # On remet l'arrêt des écrans innactif à 5 min
+    gsettings set org.cinnamon.settings-daemon.plugins.power sleep-display-ac 300
 
     notify-send "Configuration Écrans" "Mode bureau activé"
 }
