@@ -25,7 +25,7 @@ else
 fi
 # Installation de l'architecture perso
 ARCHITECTURE_PERSO=true
-if ask_yn "Appliquer l'architecture ~/dev (conseillé) ? Le dossier ~dev contiendra les repos github perso, externes (services), et local_scripts (ce repo), pour minimiser le nombre de dossiers cachés dans ~/. et regrouper tous les repo gitub."; then
+if ask_yn "Appliquer l'architecture ~/dev (conseillé) ? Le dossier ~/dev contiendra les repos github perso, externes (services), et local_scripts (ce repo), pour minimiser le nombre de dossiers cachés dans ~/. et regrouper tous les repo gitub."; then
     ARCHITECTURE_PERSO=true
 else
     ARCHITECTURE_PERSO=false
@@ -76,14 +76,17 @@ if [ "$ARCHITECTURE_PERSO" = true ]; then
         fi
     fi
 fi
-
+# installer les repos périfériques gaming ?
+GAMING_INSTALL=false
+if ask_yn "Installer les repos liés aux périfériques gaming ?"; then
+    GAMING_INSTALL=true
+fi
 
 # -- ÉTAPE 3
 # Installation des dépendance
 echo "Mise a jour des dépendances"
 sudo apt update
-sudo apt install -y xrandr pactl xdotool wmctrl jq curl
-
+sudo apt install -y xrandr pactl xdotool wmctrl jq curl wget
 
 # -- ÉTAPE 4
 # Ajout des alias
@@ -97,7 +100,54 @@ alias llm-context-file="bash ~/dev/local_scripts/llmContext.sh"
 EOF
 echo -e "\n# Source local aliases\nsource \$HOME/.config/aliases" >> ~/.bashrc
 
-# -- ÉTAPE 3
+# -- ÉTAPE 5
+# Repos
+
+#PHP
+sudo apt install -y ca-certificates apt-transport-https software-properties-common curl lsb-release
+sudo wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
+echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/php.list
+sudo apt update -y
+
+# Repos gaming
+if $GAMING_INSTALL; then
+    # XONE (controlleur xbox one)
+    if $ARCHITECTURE_PERSO; then
+        cd "$PATH_REPOS_EXTERNES"
+    fi
+    git clone https://github.com/medusalix/xone && cd xone && sudo ./install.sh
+    sudo xone-get-firmware.sh
+
+    # CKB-NEXT (souris corsair)
+    if $ARCHITECTURE_PERSO; then
+        cd "$PATH_REPOS_EXTERNES"
+    fi
+    sudo apt install build-essential cmake libudev-dev qtbase5-dev zlib1g-dev libpulse-dev libquazip5-dev libqt5x11extras5-dev libxcb-screensaver0-dev libxcb-ewmh-dev libxcb1-dev qttools5-dev git libdbusmenu-qt5-dev
+    git clone https://github.com/ckb-next/ckb-next.git && cd ckb-next
+    sudo bash quickinstall
+fi
+
+# -- ÉTAPE 6
 # Installation du reste utile
 echo "Mise a jour des dépendances"
-sudo apt install -y btop nginx steam snapd gimp simba vlc ufw tree python3 libreoffice kate ffmpeg filezilla
+sudo apt install -y btop nginx steam snapd gimp simba vlc ufw tree python3 libreoffice kate ffmpeg filezilla composer usb-creator-gtk flatpak kde-config-flatpak
+sudo snap install --classic --no-prompt code
+
+# -- ÉTAPE 7
+# téléchargements
+
+# HEROIC GAME LAUNCHER
+cd "$HOME"
+echo "Installation d'Heroic Game Launcher"
+# Récupération de la dernière version via l'API GitHub
+LATEST_RELEASE=$(curl -s "https://api.github.com/repos/Heroic-Games-Launcher/HeroicGamesLauncher/releases/latest")
+VERSION=$(echo "$LATEST_RELEASE" | jq -r '.tag_name')
+DEB_URL=$(echo "$LATEST_RELEASE" | jq -r '.assets[] | select(.name | endswith(".deb")) | .browser_download_url')
+# Téléchargement du .deb
+echo "Téléchargement de la version $VERSION..."
+curl -LO "$DEB_URL"
+# Installation du paquet
+DEB_FILE=$(basename "$DEB_URL")
+sudo apt install -y './$DEB_FILE'
+# Nettoyage
+rm -f "$DEB_FILE"
