@@ -148,6 +148,6 @@ echo "Téléchargement de la version $VERSION..."
 curl -LO "$DEB_URL"
 # Installation du paquet
 DEB_FILE=$(basename "$DEB_URL")
-sudo apt install -y './$DEB_FILE'
+sudo apt install -y "./$DEB_FILE"
 # Nettoyage
 rm -f "$DEB_FILE"
