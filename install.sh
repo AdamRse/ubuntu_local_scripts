@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source ./utils/fct.sh
+
 # -- ÉTAPE 1
 #Pour trouver le dossier home de l'utilisateur, même si le script est lancé en sudo
 if [ "$(id -u)" -eq 0 ]; then #On est en sudo
@@ -18,23 +20,16 @@ GITHUB_STATUS=$?
 if [ $GITHUB_STATUS -eq 1 ]; then
     echo "Authentification GitHub réussie"
 else
-    echo "Erreur, l'utilisateur doit avoir une authentification github vuia SSH."
+    echo "Erreur, l'utilisateur doit avoir une authentification github via SSH."
     exit 1
 fi
 # Installation de l'architecture perso
 ARCHITECTURE_PERSO=true
-while true; do
-    read -n 1 -p "Appliquer l'architecture ~/dev (conseillé) ? Le dossier ~dev contiendra les repos github perso, externes (services), et local_scripts (ce repo), pour minimiser le nombre de dossiers cachés dans ~/. et regrouper tous les repo gitub. (o/n) " response_architecture
-    # Vérification de la réponse
-    if [[ $response_architecture == "o" ]]; then
-        break
-    elif [[ $response_architecture == "n" ]]; then
-        ARCHITECTURE_PERSO=false
-        break
-    else
-        echo "Réponse invalide. Veuillez entrer 'o' (Oui) ou 'n' (Non)."
-    fi
-done
+if ask_yn "Appliquer l'architecture ~/dev (conseillé) ? Le dossier ~dev contiendra les repos github perso, externes (services), et local_scripts (ce repo), pour minimiser le nombre de dossiers cachés dans ~/. et regrouper tous les repo gitub."; then
+    ARCHITECTURE_PERSO=true
+else
+    ARCHITECTURE_PERSO=false
+fi
 
 
 # -- ÉTAPE 2
@@ -53,34 +48,25 @@ else
     REPOS_EXTERNES_EXISTS=false
 fi
 # On regarde si on doit respecter l'architecture ~/dev/
-if [ $ARCHITECTURE_PERSO ]; then
+if [ "$ARCHITECTURE_PERSO" = true ]; then
     # Gestion de ~/dev/repos_externes
-    if ! [ $REPOS_EXTERNES_EXISTS ]; then
+    if ! [ "$REPOS_EXTERNES_EXISTS" = false ]; then
         mkdir -p "$PATH_REPOS_EXTERNES"
         REPOS_EXTERNES_EXISTS=true
     fi
         
     # Gestion de ~/dev/local_scripts
-    if ! [ $PWD == "$PATH_LOCAL_SCRIPTS"]; then # Si le programme n'est pas executé dans ~/dev/local_scripts on cherchera à l'y placer (avec accord de l'utilisateur) sinon on est bien executé depuis le bon endroit
+    if ! [ $PWD == "$PATH_LOCAL_SCRIPTS" ]; then # Si le programme n'est pas executé dans ~/dev/local_scripts on cherchera à l'y placer (avec accord de l'utilisateur) sinon on est bien executé depuis le bon endroit
         if [ $LOCAL_SCRIPTS_EXISTS ]; then # Si ~/dev/local_scripts existe, on attend une réponse de l'utilisateur, le script install n'est pas executé depuis ~/dev/local_scripts mais ~/dev/local_scripts existe. Faut-il l'écraser et prendre sa place ?
-            while true; do
-                read -n 1 -p "Le répertoire '$PATH_LOCAL_SCRIPTS' existe déjà, mais le script est executé depuis '$PWD'. écraser '$PATH_LOCAL_SCRIPTS' pour y déplacer le repository de '$PWD' ? (o/n) " response_ecraser
-                # Vérification de la réponse
-                if [[ $response_ecraser == "o" ]]; then
-                    echo "Supression de '$PATH_LOCAL_SCRIPTS'"
-                    sudo rm -rf $PATH_LOCAL_SCRIPTS
-                    echo "Création du répertoire vide '$PATH_LOCAL_SCRIPTS'"
-                    mkdir -p "$PATH_LOCAL_SCRIPTS"
-                    echo "Déplacement dans le répertoire '$PATH_LOCAL_SCRIPTS'"
-                    mv "$PWD" "$PATH_LOCAL_SCRIPTS"
-                    LOCAL_SCRIPTS_EXISTS=true
-                    break
-                elif [[ $response_ecraser == "n" ]]; then
-                    break
-                else
-                    echo "Réponse invalide. Veuillez entrer 'o' (Oui) ou 'n' (Non)."
-                fi
-            done
+            if ask_yn "Le répertoire '$PATH_LOCAL_SCRIPTS' existe déjà, mais le script est executé depuis '$PWD'. écraser '$PATH_LOCAL_SCRIPTS' pour y déplacer le repository de '$PWD' ?"; then
+                echo "Supression de '$PATH_LOCAL_SCRIPTS'"
+                sudo rm -rf $PATH_LOCAL_SCRIPTS
+                echo "Création du répertoire vide '$PATH_LOCAL_SCRIPTS'"
+                mkdir -p "$PATH_LOCAL_SCRIPTS"
+                echo "Déplacement dans le répertoire '$PATH_LOCAL_SCRIPTS'"
+                mv "$PWD" "$PATH_LOCAL_SCRIPTS"
+                LOCAL_SCRIPTS_EXISTS=true
+            fi
         else # Si ~/dev/local_scripts n'existe pas on le créé et on bouge le repo dedans
             echo "Création du répertoire '$PATH_LOCAL_SCRIPTS'"
             mkdir -p "$PATH_LOCAL_SCRIPTS"
@@ -98,12 +84,11 @@ echo "Mise a jour des dépendances"
 sudo apt update
 sudo apt install -y xrandr pactl xdotool wmctrl jq curl
 sudo apt install -y php php-dom php-xml php-mysql
-sudo apt install -y 
 
 
 # -- ÉTAPE 4
 # Ajout des alias
-cat >> $HOME_FOLDER/.bashrc << 'EOF'
+cat >> $HOME_FOLDER/.config/aliases << 'EOF'
 # Alias local_scripts
 alias postman="nohup ~/dev/repos_externes/postman/postman-agent --no-sandbox >/dev/null 2>&1 &"
 alias a2new="sudo bash ~/dev/local_scripts/newApache2Project.sh"
@@ -111,3 +96,4 @@ alias yt-dlp="python3 ~/dev/local_scripts/yt-dlp.py -P '~/Téléchargements/yt-d
 alias dns-update="bash ~/dev/local_scripts/hostsUpdater.sh"
 alias llm-context-file="bash ~/dev/local_scripts/llmContext.sh"
 EOF
+echo -e "\n# Source local aliases\nsource \$HOME/.config/aliases" >> ~/.bashrc
