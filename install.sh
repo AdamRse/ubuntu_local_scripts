@@ -78,12 +78,11 @@ if [ "$ARCHITECTURE_PERSO" = true ]; then
 fi
 
 
-# -- ÉTAPE 3 [EN COURS]
+# -- ÉTAPE 3
 # Installation des dépendance
 echo "Mise a jour des dépendances"
 sudo apt update
 sudo apt install -y xrandr pactl xdotool wmctrl jq curl
-sudo apt install -y php php-dom php-xml php-mysql
 
 
 # -- ÉTAPE 4
@@ -97,3 +96,8 @@ alias dns-update="bash ~/dev/local_scripts/hostsUpdater.sh"
 alias llm-context-file="bash ~/dev/local_scripts/llmContext.sh"
 EOF
 echo -e "\n# Source local aliases\nsource \$HOME/.config/aliases" >> ~/.bashrc
+
+# -- ÉTAPE 3
+# Installation du reste utile
+echo "Mise a jour des dépendances"
+sudo apt install -y btop nginx steam snapd gimp simba vlc ufw tree python3 libreoffice kate ffmpeg filezilla
