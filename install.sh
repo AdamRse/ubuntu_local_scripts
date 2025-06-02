@@ -130,7 +130,7 @@ fi
 # -- ÉTAPE 6
 # Installation du reste utile
 echo "Mise a jour des dépendances"
-sudo apt install -y btop nginx steam snapd gimp simba vlc ufw tree python3 libreoffice kate ffmpeg filezilla composer usb-creator-gtk flatpak kde-config-flatpak
+sudo apt install -y btop nginx steam snapd gimp vlc ufw tree python3 libreoffice kate ffmpeg filezilla composer usb-creator-gtk flatpak kde-config-flatpak
 sudo snap install --classic --no-prompt code
 
 # -- ÉTAPE 7
