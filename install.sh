@@ -98,7 +98,7 @@ alias yt-dlp="python3 ~/dev/local_scripts/yt-dlp.py -P '~/Téléchargements/yt-d
 alias dns-update="bash ~/dev/local_scripts/hostsUpdater.sh"
 alias llm-context-file="bash ~/dev/local_scripts/llmContext.sh"
 EOF
-echo -e "\n# Source local aliases\nsource \$HOME/.config/aliases" >> ~/.bashrc
+echo -e "\n# Source local aliases\nsource \"\$HOME/.config/aliases\"" >> ~/.bashrc
 
 # -- ÉTAPE 5
 # Repos
