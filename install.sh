@@ -86,7 +86,7 @@ fi
 # Installation des dépendance
 echo "Mise a jour des dépendances"
 sudo apt update
-sudo apt install -y xrandr pactl xdotool wmctrl jq curl wget
+sudo apt install -y x11-xserver-utils pulseaudio pulseaudio-utils xdotool wmctrl jq curl wget
 
 # -- ÉTAPE 4
 # Ajout des alias
