@@ -104,10 +104,10 @@ echo -e "\n# Source local aliases\nsource \"\$HOME/.config/aliases\"" >> ~/.bash
 # Repos
 
 #PHP
-sudo apt install -y ca-certificates apt-transport-https software-properties-common curl lsb-release
-sudo wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
-echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/php.list
-sudo apt update -y
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y software-properties-common lsb-release
+sudo add-apt-repository ppa:ondrej/php -y
+sudo apt update
 
 # Repos gaming
 if $GAMING_INSTALL; then
@@ -115,7 +115,8 @@ if $GAMING_INSTALL; then
     if $ARCHITECTURE_PERSO; then
         cd "$PATH_REPOS_EXTERNES"
     fi
-    git clone https://github.com/medusalix/xone && cd xone && sudo ./install.sh
+    sudo apt install dkms cabextract
+    git clone git@github.com:dlundqvist/xone.git && cd xone && sudo ./install.sh
     sudo xone-get-firmware.sh
 
     # CKB-NEXT (souris corsair)
