@@ -1,4 +1,12 @@
 #!/bin/bash
+#===============================================================================
+# Nom:         install.sh
+# Description: Installe les paquets de base pour un PC de bureau (Jeu+Code)
+# Auteur:      Adam Rousselle
+# Version:     1.0.0
+# Date:        2025-06-09
+# Usage:       ./install.sh
+#===============================================================================
 
 source ./utils/fct.sh
 
