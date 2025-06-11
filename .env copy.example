@@ -7,12 +7,12 @@ NAS_PASSWORD="pass"
 NAS_FTP_ADDR="sftp://adress"
 
 # Paramètres de stockage des fichiers de config
-USER_HOME="/home/user/"
-CONFIG_DIR="$HOME/.config/local_scripts"
+USER_HOME="/home/user"
+CONFIG_DIR="$USER_HOME/.config/local_scripts"
 
 # =============
 # nasSavings.sh
 # =============
 # Répertoires locaux
-NAS_LOCAL_MEMES="$HOME/Downloads/H/"
-NAS_LOCAL_VIDEOS="$HOME/Downloads/yt-dlp/"
+NAS_LOCAL_MEMES="$HOME/Downloads/H"
+NAS_LOCAL_VIDEOS="$HOME/Downloads/yt-dlp"
