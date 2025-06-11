@@ -2,9 +2,13 @@
 # Locales
 # =======
 # Paramètres de connexion du NAS
-NAS_USER=""
-NAS_PASSWORD=""
-NAS_FTP_ADDR=""*
+NAS_USER="user"
+NAS_PASSWORD="pass"
+NAS_FTP_ADDR="sftp://adress"
+
+# Paramètres de stockage des fichiers de config
+USER_HOME="/home/user/"
+CONFIG_DIR="$HOME/.config/local_scripts"
 
 # =============
 # nasSavings.sh

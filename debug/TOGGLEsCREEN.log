@@ -1,0 +1,9 @@
+adam@desktop:~$ bash dev/local_scripts/toggleScreens.sh desk
+steam.sh[3147]: Running Steam on ubuntu 24.04 64-bit
+steam.sh[3147]: STEAM_RUNTIME is enabled automatically
+setup.sh[3182]: Steam runtime environment up-to-date!
+steam.sh[3147]: Using supervisor /home/adam/.steam/debian-installation/ubuntu12_32/steam-runtime/amd64/usr/bin/steam-runtime-supervisor
+steam.sh[3147]: Steam client's requirements are satisfied
+CProcessEnvironmentManager is ready, 6 preallocated environment variables.
+Steam is already running, exiting (command line was forwarded).
+No such schema “org.cinnamon.settings-daemon.plugins.power”
