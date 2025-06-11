@@ -8,27 +8,8 @@ screenlist_filename="screenList"
 # SET CONST
 pathfile_screenList="$CONFIG_DIR/$screenlist_filename"
 
-# CHECK
-if  [ ! -d "$CONFIG_DIR" ]; then
-    if ! mkdir -p "$CONFIG_DIR"; then
-        echo "Impossible de créer le répertoire de configuration dans $CONFIG_DIR. Vérifiez les droits d'écriture ou changez la clé \$CONFIG_DIR dans le .env"
-        exit 1
-    fi
-else
-    if [ ! -w "$CONFIG_DIR" ]; then
-        echo "Droits d'écriture requis pour $CONFIG_DIR. Vérifiez les droits d'écriture ou changez la clé \$CONFIG_DIR dans le .env"
-        exit 1
-    fi
-fi
-
 # FUNCTIONS
-save_config_file() {
-    xrandr --listmonitors > "$pathfile_screenList"
-}
-read_config_file(){
-    return $(cat "$pathfile_screenList")
-}
-nout() { # notification output
+nout() { # notification output (continue le script)
     if [ -z "$1" ]; then
         out="nout() : Erreur d'utilisation, la fonction attends une string."
         echo "$out"
@@ -38,9 +19,9 @@ nout() { # notification output
         notify-send -u normal "$1"
     fi
 }
-fnout() { # fail notification output
+fnout() { # fail notification output (interrompt le script : exit 1)
     if [ -z "$1" ]; then
-        out="nout() : Aucun message d'erreur passé."
+        out="fnout() : Aucun message d'erreur passé."
         echo "$out" >$2
         notify-send -u critical "$out"
     else
@@ -49,3 +30,33 @@ fnout() { # fail notification output
     fi
     exit 1
 }
+wnout() { # warning notification output (continue le script)
+    if [ -z "$1" ]; then
+        out="wnout() : Aucun message de warning passé."
+        echo "$out" >$2
+        notify-send -u critical "$out"
+    else
+        echo "$1" >$2
+        notify-send -u critical "$1"
+    fi
+}
+save_config_file() {
+    xrandr --listmonitors > "$pathfile_screenList" || fnout 
+}
+read_config_file(){
+    return $(cat "$pathfile_screenList")
+}
+
+# CHECKS
+# Accès répertoire de config
+if  [ ! -d "$CONFIG_DIR" ]; then
+    mkdir -p "$CONFIG_DIR" || fnout "Impossible de créer le répertoire de configuration dans $CONFIG_DIR. Vérifiez les droits d'écriture ou changez la clé \$CONFIG_DIR dans le .env"
+else
+    if [ ! -w "$CONFIG_DIR" ]; then
+        fnout "Droits d'écriture requis pour $CONFIG_DIR. Vérifiez les droits d'écriture ou changez la clé \$CONFIG_DIR dans le .env"
+    fi
+fi
+# Accès fichiers de config
+if [ ! -f "$pathfile_screenList" ] || [ ! -w "$pathfile_screenList" ] || [ ! -r "$pathfile_screenList" ]; then
+    fnout "Le fichier '$pathfile_screenList' n'est pas accessible en écriture"
+fi

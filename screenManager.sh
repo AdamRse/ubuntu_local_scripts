@@ -14,8 +14,9 @@ set -e
 
 # SOURCES
 source ./.env
-source ./utils/screenManagerSetFcts.sh
 source ./utils/fct.sh
+source ./utils/screenManagerSetFcts.sh # Dépendance à .env
 
+echo "TEST"
 save_config_file
 echo $(read_config_file)
