@@ -1,5 +1,5 @@
 adam@desktop:~/dev$ bash local_scripts/install.sh 
-local_scripts/install.sh: line 3: ./utils/fct.sh: No such file or directory
+local_scripts/install.sh: line 3: ./utils/global/fct.sh: No such file or directory
 git version 2.43.0
 Hi AdamRse! You've successfully authenticated, but GitHub does not provide shell access.
 Authentification GitHub réussie

@@ -8,7 +8,7 @@
 # Usage:       ./install.sh
 #===============================================================================
 
-source ./utils/fct.sh
+source ./utils/global/fct.sh
 
 # -- ÉTAPE 1
 #Pour trouver le dossier home de l'utilisateur, même si le script est lancé en sudo
