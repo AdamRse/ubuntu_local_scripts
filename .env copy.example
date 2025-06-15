@@ -5,6 +5,7 @@
 NAS_USER="user"
 NAS_PASSWORD="pass"
 NAS_FTP_ADDR="sftp://adress"
+NAS_MOUNT_POINT="/mnt/nas"
 
 # Paramètres de stockage des fichiers de config
 USER_HOME="/home/user"
