@@ -94,7 +94,8 @@ fi
 # Installation des dépendance
 echo "Mise a jour des dépendances"
 sudo apt update
-sudo apt install -y x11-xserver-utils pulseaudio pulseaudio-utils xdotool wmctrl jq curl wget libnotify sshfs
+sudo apt install -y x11-xserver-utils pulseaudio pulseaudio-utils xdotool wmctrl jq curl wget libnotify sshfs sshpass
+
 
 # -- ÉTAPE 4
 # Ajout des alias
