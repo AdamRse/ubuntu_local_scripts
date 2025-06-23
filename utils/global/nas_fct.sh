@@ -66,7 +66,7 @@ unmount_nas() {
         echo "Démontage réussi de $NAS_MOUNT_POINT"
         sudo rmdir "$NAS_MOUNT_POINT"
     else
-        echo "Échec du démontage de $NAS_MOUNT_POINT"
+        echo -e "Échec du démontage de $NAS_MOUNT_POINT.\nVérifier si un processus est en cours d'utilisation"
         return 1
     fi
 }
