@@ -45,8 +45,9 @@ mount_nas() {
         sudo apt-get install -y sshpass
     fi
 
-    if sshpass -p "$NAS_PASSWORD" -f sshfs -o \
-        debug,allow_other,default_permissions,reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,compression=yes,cache_timeout=3600,password_stdin -p "$NAS_PORT" "$NAS_USER@$NAS_ADDR:/" "$NAS_MOUNT_POINT" <<<"$NAS_PASSWORD"; then
+    if sudo sshpass -p "$NAS_PASSWORD" sshfs \
+        -o allow_other,default_permissions,reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,compression=yes,cache_timeout=3600,password_stdin \
+        -p "$NAS_PORT" "$NAS_USER@$NAS_ADDR:/" "$NAS_MOUNT_POINT" <<<"$NAS_PASSWORD"; then
         echo "Montage réussi!"
     else
         echo "Échec du montage du serveur NAS $NAS_NAME"
@@ -57,20 +58,20 @@ mount_nas() {
 }
 
 unmount_nas() {
-    if [ -z "$NAS_NAME" ]; then
-        echo "Erreur: NAS_NAME doit être défini"
+    if [ -z "$NAS_MOUNT_POINT" ]; then
+        echo "Erreur: NAS_MOUNT_POINT doit être défini"
         return 1
     fi
 
-    NAS_MOUNT_POINT="/mnt/$NAS_NAME"
+    if [ ! -d "$NAS_MOUNT_POINT" ]; then
+        echo "Le point de montage est déjà démonté"
+    fi
     
-    if fusermount -u "$NAS_MOUNT_POINT"; then
+    if sudo fusermount -u "$NAS_MOUNT_POINT"; then
         echo "Démontage réussi de $NAS_MOUNT_POINT"
         sudo rmdir "$NAS_MOUNT_POINT"
     else
         echo -e "Échec du démontage de $NAS_MOUNT_POINT.\nVérifier si un processus est en cours d'utilisation"
         return 1
     fi
-
-    return 0
 }

@@ -6,11 +6,6 @@ source ./utils/global/nas_fct.sh
 
 mount_nas || fout "Impossible de monter le NAS, arrêt du programme."
 
-# Vérifier que le point de montage existe
-if [ ! -d "$NAS_MOUNT_POINT" ]; then
-    fout "Le point de montage $NAS_MOUNT_POINT n'existe pas"
-fi
-
 # Traiter chaque paire de backup
 for pair in "${BACKUP_PAIRS[@]}"; do
     # Séparer la source et la destination
