@@ -52,6 +52,8 @@ mount_nas() {
         echo "Échec du montage du serveur NAS $NAS_NAME"
         return 1
     fi
+
+    return 0
 }
 
 unmount_nas() {
