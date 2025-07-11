@@ -12,14 +12,16 @@ source ./utils/global/fct.sh
 
 # -- ÉTAPE 1
 #Pour trouver le dossier home de l'utilisateur, même si le script est lancé en sudo
-if [ "$(id -u)" -eq 0 ]; then #On est en sudo
-    HOME_FOLDER="/home/$(whoami)"
+if [ -n "$SUDO_USER" ]; then #On est en sudo
+    USER=$SUDO_USER
+    HOME_FOLDER="/home/$USER"
     if ! [ -d "$HOME_FOLDER" ]; then # Le dossier perso n'a pas été trouvé
         echo -e "Erreur, impossible de trouver le dossier /home/<user>, le nom d'utilisateur ne correspond à aucun répertoire de /home.\nRelancez le programme sans droits d'administrateur (sans sudo)."
         exit 1
     fi
 else
     HOME_FOLDER=$HOME
+    $USER=$(whoami)
 fi
 #Vérifier que git est installé avec un utilisateur valide
 git --version || { echo "Veuillez installer et configurer un utilisateur git."; exit 1; }
@@ -84,17 +86,25 @@ if [ "$ARCHITECTURE_PERSO" = true ]; then
         fi
     fi
 fi
-# installer les repos périfériques gaming ?
+# Quelles options installer ?
 GAMING_INSTALL=false
 if ask_yn "Installer les repos liés aux périfériques gaming ?"; then
     GAMING_INSTALL=true
 fi
+WEB_DEV_INSTALL=false
+if ask_yn "Installer les langages de programmation (PHP) ?"; then
+    WEB_DEV_INSTALL=true
+fi
+DOCKER_INSTALL=false
+if ask_yn "Installer Docker ?"; then
+    DOCKER_INSTALL=true
+fi
 
 # -- ÉTAPE 3
-# Installation des dépendance
+# Installation des dépendance de local_scripts
 echo "Mise a jour des dépendances"
 sudo apt update
-sudo apt install -y x11-xserver-utils pulseaudio pulseaudio-utils xdotool wmctrl jq curl wget libnotify sshfs sshpass
+sudo apt install -y x11-xserver-utils pulseaudio pulseaudio-utils xdotool wmctrl jq curl wget libnotify sshfs sshpass make
 
 
 # -- ÉTAPE 4
@@ -110,13 +120,27 @@ EOF
 echo -e "\n# Source local aliases\nsource \"\$HOME/.config/aliases\"" >> ~/.bashrc
 
 # -- ÉTAPE 5
-# Repos
+# Web devs tools
 
 #PHP
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y software-properties-common lsb-release
-sudo add-apt-repository ppa:ondrej/php -y
-sudo apt update
+if $WEB_DEV_INSTALL; then
+    echo "INSTALLATION DES LANGAGES DE PROGRAMMATION"
+    sudo apt update && sudo apt upgrade -y
+    sudo apt install -y software-properties-common lsb-release
+    sudo add-apt-repository ppa:ondrej/php -y
+    sudo apt update
+fi
+#DOCKER
+if $DOCKER_INSTALL; then
+    echo "INSTALLATION DE DOCKER"
+    sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    sudo chmod a+r /etc/apt/keyrings/docker.asc
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+    $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    sudo apt update
+    sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    sudo usermod -aG docker $USER
+fi
 
 # Repos gaming
 if $GAMING_INSTALL; then
@@ -135,6 +159,22 @@ if $GAMING_INSTALL; then
     sudo apt install build-essential cmake libudev-dev qtbase5-dev zlib1g-dev libpulse-dev libquazip5-dev libqt5x11extras5-dev libxcb-screensaver0-dev libxcb-ewmh-dev libxcb1-dev qttools5-dev git libdbusmenu-qt5-dev
     git clone https://github.com/ckb-next/ckb-next.git && cd ckb-next
     sudo bash quickinstall
+
+    # HEROIC GAME LAUNCHER
+    cd "$HOME"
+    echo "Installation d'Heroic Game Launcher"
+    # Récupération de la dernière version via l'API GitHub
+    LATEST_RELEASE=$(curl -s "https://api.github.com/repos/Heroic-Games-Launcher/HeroicGamesLauncher/releases/latest")
+    VERSION=$(echo "$LATEST_RELEASE" | jq -r '.tag_name')
+    DEB_URL=$(echo "$LATEST_RELEASE" | jq -r '.assets[] | select(.name | endswith(".deb")) | .browser_download_url')
+    # Téléchargement du .deb
+    echo "Téléchargement de la version $VERSION..."
+    curl -LO "$DEB_URL"
+    # Installation du paquet
+    DEB_FILE=$(basename "$DEB_URL")
+    sudo apt install -y "./$DEB_FILE"
+    # Nettoyage
+    rm -f "$DEB_FILE"
 fi
 
 # -- ÉTAPE 6
@@ -145,19 +185,3 @@ sudo snap install --classic --no-prompt code
 
 # -- ÉTAPE 7
 # téléchargements
-
-# HEROIC GAME LAUNCHER
-cd "$HOME"
-echo "Installation d'Heroic Game Launcher"
-# Récupération de la dernière version via l'API GitHub
-LATEST_RELEASE=$(curl -s "https://api.github.com/repos/Heroic-Games-Launcher/HeroicGamesLauncher/releases/latest")
-VERSION=$(echo "$LATEST_RELEASE" | jq -r '.tag_name')
-DEB_URL=$(echo "$LATEST_RELEASE" | jq -r '.assets[] | select(.name | endswith(".deb")) | .browser_download_url')
-# Téléchargement du .deb
-echo "Téléchargement de la version $VERSION..."
-curl -LO "$DEB_URL"
-# Installation du paquet
-DEB_FILE=$(basename "$DEB_URL")
-sudo apt install -y "./$DEB_FILE"
-# Nettoyage
-rm -f "$DEB_FILE"
