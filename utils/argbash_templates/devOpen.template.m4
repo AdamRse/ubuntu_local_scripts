@@ -1,7 +1,7 @@
 #!/bin/bash
 # m4_ignore(
 echo "Ceci est un script généré par argbash."
-echo "Pour tester"
+echo "Pour tester, à la racine du projet : make devopen <arguments>"
 # Ce qui suit est généré par argbash
 #)
 
