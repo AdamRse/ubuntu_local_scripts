@@ -4,6 +4,9 @@
 source ./.env
 source ./utils/global/fct.sh
 
+# Set
+script_dir=$(dirname "$0")
+
 # Fonctions
 is_in_path() {
     local target_dir=$(realpath -q "$1" 2>/dev/null || echo "$1")
@@ -42,8 +45,8 @@ for entry in "${COMMAND_MAPPING[@]}"; do
     command_name="${entry%%:*}"
     script_name="${entry#*:}"
     
-    chmod +x "$PWD/$script_name"
-    ln -sf "$PWD/$script_name" "$LOCAL_BIN/$command_name"
+    chmod +x "$script_dir/$script_name"
+    ln -sf "$script_dir/$script_name" "$LOCAL_BIN/$command_name"
 done
 
 # Ajout des Alias
