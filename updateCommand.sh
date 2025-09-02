@@ -1,6 +1,74 @@
 #!/bin/bash
 
+# Sources
 source ./.env
-source ./data/alias_mapping.sh
-source ./data/command_mapping.sh
+source ./utils/global/fct.sh
 
+# Fonctions
+is_in_path() {
+    local target_dir=$(realpath -q "$1" 2>/dev/null || echo "$1")
+    local IFS=':'
+    
+    for path_dir in $PATH; do
+        local abs_path_dir=$(realpath -q "$path_dir" 2>/dev/null || echo "$path_dir")
+        if [ "$abs_path_dir" = "$target_dir" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+#Vérifications du PATH
+if ! is_in_path "$LOCAL_BIN"; then
+    if [ ! -d "$LOCAL_BIN" ]; then
+        if ! ask_yn () "Le répertoire '$LOCAL_BIN' n'existe pas. Faut-il le créer et l'ajouter au PATH ?"; then
+            fout "Annulation de l'utilisateur, le répertoire '$LOCAL_BIN' n'existe pas."
+        fi
+
+        lout "Création du répertoire $LOCAL_BIN"
+        mkdir -p "$LOCAL_BIN" || fout "Impossible de créer le répertoire '$LOCAL_BIN'"
+
+        lout "Ajout du répertoire '$LOCAL_BIN' dans le PATH"
+        echo 'PATH="$PATH:$LOCAL_BIN"' >> "$BASH_PROFILE" || fout "Impossible de modifier le PATH dans $BASH_PROFILE"
+
+        lout "Rechargement du PATH ($BASH_PROFILE)"
+        source "$BASH_PROFILE"
+    fi
+fi
+
+# Ajout des commandes
+for entry in "${COMMAND_MAPPING[@]}"; do
+    # Séparer au premier ":" seulement
+    command_name="${entry%%:*}"
+    script_name="${entry#*:}"
+    
+    chmod +x "$PWD/$script_name"
+    ln -sf "$PWD/$script_name" "$LOCAL_BIN/$command_name"
+done
+
+# Ajout des Alias
+# Vérification de l'existance d'un fichier alias
+if [ ! -f "$BASH_ALIASES" ]; then
+    mkdir -p "$(dirname "$BASH_ALIASES")" && > "$BASH_ALIASES"
+fi
+
+for entry in "${ALIAS_MAPPING[@]}"; do
+    # Séparer au premier ":" seulement
+    alias_name="${entry%%:*}"
+    command_name="${entry#*:}"
+    
+    # Supprimer l'alias existant s'il y en a un
+    sed -i "/^[[:space:]]alias[[:space:]]\+$alias_name=/d" "$BASH_ALIASES"
+    
+    # Ajouter le nouvel alias
+    echo "alias $alias_name='$command_name'" >> "$BASH_ALIASES"
+done
+
+# Vérifier que le fichier aliases est appelé dans le .bashrc
+test_alias_token="1Ahc6Zal41-#"
+echo "TEST_ALIAS='$test_alias_token'" >> "$BASH_ALIASES"
+source "$HOME/.bashrc"
+if [ "$TEST_ALIAS" != "$test_alias_token" ]; then
+    echo 'source "$BASH_ALIASES"' >> "$HOME/.bashrc"
+fi
+sed -i "/TEST_ALIAS=/d" "$BASH_ALIASES"

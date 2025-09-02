@@ -9,4 +9,18 @@ source ./utils/global/nas_fct.sh
 #     mount_nas
 # fi
 
-echo "Je suis $SUDO_USER"
+test_alias_token="1Ahc6Zal41-#"
+echo "TEST_ALIAS='$test_alias_token'" >> "$BASH_ALIASES"
+source "$HOME/.bashrc"
+echo "$TEST_ALIAS --- $test_alias_token"
+if [ "$TEST_ALIAS" != "$test_alias_token" ]; then
+    echo "Token non trouvé..."
+else
+    echo "TOKEN TROUVE !"
+fi
+if [ "$TEST_ALIAS" == "$test_alias_token" ]; then
+    echo "TOKEN TROUVE !"
+else
+    echo "Token non trouvé..."
+fi
+sed -i "/TEST_ALIAS/d" "$BASH_ALIASES"
