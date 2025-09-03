@@ -1,7 +1,12 @@
 #!/bin/bash
 
 # Paramètres
-parent_script_absolute="${BASH_SOURCE[$((depth - 1))]}"
+# Obtenir le chemin réel du script parent (même via lien symbolique)
+if [ -L "${BASH_SOURCE[$((depth - 1))]}" ]; then
+    parent_script_absolute=$(readlink -f "${BASH_SOURCE[$((depth - 1))]}")
+else
+    parent_script_absolute="${BASH_SOURCE[$((depth - 1))]}"
+fi
 parent_script_name=$(basename $parent_script_absolute)
 parent_script_path=$(dirname $parent_script_absolute)
 timestamp=$(date +"[%Y/%m/%d %H-%M-%S.%6N]")
