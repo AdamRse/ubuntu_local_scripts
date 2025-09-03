@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Paramètres
+SCRIPT_DIR=$(dirname "$0")
+
 # fonctions primaires (utilisées par les fonctions utiles)
 get_original_script() {
     local depth=${#BASH_SOURCE[@]}

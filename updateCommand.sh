@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Sources
-source ./.env
-source ./utils/global/fct.sh
-
 # Set
 script_dir=$(dirname "$0")
+
+# Sources
+source $script_dir/.env
+source $script_dir/utils/global/fct.sh
 
 # Fonctions
 is_in_path() {
@@ -21,11 +21,13 @@ is_in_path() {
     return 1
 }
 
+lout "Execution depuis $script_dir"
+
 #Vérifications du PATH
 lout "Vérification du PATH"
 if ! is_in_path "$LOCAL_BIN"; then
     if [ ! -d "$LOCAL_BIN" ]; then
-        if ! ask_yn () "Le répertoire '$LOCAL_BIN' n'existe pas. Faut-il le créer et l'ajouter au PATH ?"; then
+        if ! ask_yn "Le répertoire '$LOCAL_BIN' n'existe pas. Faut-il le créer et l'ajouter au PATH ?"; then
             fout "Annulation de l'utilisateur, le répertoire '$LOCAL_BIN' n'existe pas."
         fi
 
@@ -64,13 +66,13 @@ for entry in "${ALIAS_MAPPING[@]}"; do
     # Séparer au premier ":" seulement
     alias_name="${entry%%:*}"
     command_name="${entry#*:}"
-    lout "Ajout de l'alias $alias_name"
+    lout "Ajout de l'alias $alias_name=\"$command_name\""
     
     # Supprimer l'alias existant s'il y en a un
-    sed -i "/^[[:space:]]alias[[:space:]]\+$alias_name=/d" "$BASH_ALIASES"
+    sed -i "/^[[:space:]]*alias[[:space:]]\+$alias_name=/d" "$BASH_ALIASES"
     
     # Ajouter le nouvel alias
-    echo "alias $alias_name='$command_name'" >> "$BASH_ALIASES"
+    echo "alias $alias_name=\"$command_name\"" >> "$BASH_ALIASES"
 done
 
 # Vérifier que le fichier aliases est appelé dans le .bashrc
