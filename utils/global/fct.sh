@@ -1,17 +1,27 @@
 #!/bin/bash
 
 # Paramètres
-SCRIPT_DIR=$(dirname "$0")
+parent_script_absolute="${BASH_SOURCE[$((depth - 1))]}"
+parent_script_name=$(basename $parent_script_absolute)
+parent_script_path=$(dirname $parent_script_absolute)
+timestamp=$(date +"[%Y/%m/%d %H-%M-%S.%6N]")
+# Logs activés ou non, conversion en booléen
+if [ "$LOG_ENABLE" == "true" ] || [ "$LOG_ENABLE" == "1" ]; then
+    LOG_ENABLE=true
+else
+    LOG_ENABLE=false
+fi
 
-# fonctions primaires (utilisées par les fonctions utiles)
-get_original_script() {
-    local depth=${#BASH_SOURCE[@]}
-    local original_script="${BASH_SOURCE[$((depth - 1))]}"
-    echo "$original_script"
-}
-timestamp() {
-    date +"[%Y/%m/%d %H-%M-%S.%6N]"
-}
+# Obtenir le répertoire des logs
+if $LOG_ENABLE; then
+    if [ -d "$LOG_DIR" ]; then
+        logfile="$LOG_DIR/$parent_script_name.log"
+    elif [ -d "$parent_script_path/$LOG_DIR" ]; then
+        logfile="$parent_script_path/$LOG_DIR/$parent_script_name.log"
+    else
+        logfile="$parent_script_path/logs/$parent_script_name.log"
+    fi
+fi
 
 # Fonctions utiles
 ask_yn () {
@@ -35,55 +45,37 @@ done
 }
 
 lout() {
-    parent_script="$(get_original_script)"
-    timestamp="$(timestamp)"
-
     if [ -z "$1" ]; then
         echo "fonction lout() : Aucun message passé." >&2
         return 1
     fi
-    if [ -z "$LOG_DIR" ] || [ ! -d "$LOG_DIR" ]; then
-        logfile="./logs/$parent_script.log"
-    else
-        logfile="$LOG_DIR/$parent_script.log"
-    fi
 
     echo "$1"
-    echo "$1" >> "$logfile"
+    if $LOG_ENABLE; then
+        echo "$timestamp $1" >> "$logfile"
+    fi
     return 0
 }
 fout() {
-    parent_script="$(get_original_script)"
-    timestamp="$(timestamp)"
-
     if [ -z "$1" ]; then
         echo "fonction fout() : Aucun message passé." >&2
         exit 1
     fi
-    if [ -z "$LOG_DIR" ] || [ ! -d "$LOG_DIR" ]; then
-        logfile="./logs/$parent_script.log"
-    else
-        logfile="$LOG_DIR/$parent_script.log"
-    fi
 
-    echo "$1" >&2
-    echo "$1" >> "$logfile"
+    echo "Erreur : $1" >&2
+    if $LOG_ENABLE; then
+        echo "$timestamp ERROR : $1" >> "$logfile"
+    fi
     exit 1
 }
 wout() {
-    parent_script="$(get_original_script)"
-    timestamp="$(timestamp)"
-
     if [ -z "$1" ]; then
         echo "fonction wout() : Aucun message passé." >&2
         exit 1
     fi
-    if [ -z "$LOG_DIR" ] || [ ! -d "$LOG_DIR" ]; then
-        logfile="./logs/$parent_script.log"
-    else
-        logfile="$LOG_DIR/$parent_script.log"
-    fi
 
-    echo "$1" >&2
-    echo "$1" >> "$logfile"
+    echo "Attention : $1" >&2
+    if $LOG_ENABLE; then
+        echo "$timestamp WARNING : $1" >> "$logfile"
+    fi
 }
