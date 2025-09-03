@@ -1,13 +1,7 @@
 #!/bin/bash
 
 # Set
-if [ -L "$0" ]; then
-    # Si exécuté via un lien symbolique
-    script_path=$(readlink -f "$0")
-else
-    # Si exécuté directement
-    script_path="$0"
-fi
+script_path=$(readlink -f "$0")
 script_dir=$(dirname "$script_path")
 
 # Sources
