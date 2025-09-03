@@ -22,6 +22,7 @@ is_in_path() {
 }
 
 #Vérifications du PATH
+lout "Vérification du PATH"
 if ! is_in_path "$LOCAL_BIN"; then
     if [ ! -d "$LOCAL_BIN" ]; then
         if ! ask_yn () "Le répertoire '$LOCAL_BIN' n'existe pas. Faut-il le créer et l'ajouter au PATH ?"; then
@@ -40,17 +41,21 @@ if ! is_in_path "$LOCAL_BIN"; then
 fi
 
 # Ajout des commandes
+lout "Ajout des commandes"
 for entry in "${COMMAND_MAPPING[@]}"; do
     # Séparer au premier ":" seulement
     command_name="${entry%%:*}"
     script_name="${entry#*:}"
+
+    lout "Ajout de la commande : $command_name -> $script_name"
     
     chmod +x "$script_dir/$script_name"
-    ln -sf "$script_dir/$script_name" "$LOCAL_BIN/$command_name"
+    ln -sf "$script_dir/$script_name" "$LOCAL_BIN/$command_name" || wout "Impossible d'écrire le lien symbolique pour $command_name -> $script_name"
 done
 
 # Ajout des Alias
 # Vérification de l'existance d'un fichier alias
+lout "Ajout des aliases dans $BASH_ALIASES"
 if [ ! -f "$BASH_ALIASES" ]; then
     mkdir -p "$(dirname "$BASH_ALIASES")" && > "$BASH_ALIASES"
 fi
@@ -59,6 +64,7 @@ for entry in "${ALIAS_MAPPING[@]}"; do
     # Séparer au premier ":" seulement
     alias_name="${entry%%:*}"
     command_name="${entry#*:}"
+    lout "Ajout de l'alias $alias_name"
     
     # Supprimer l'alias existant s'il y en a un
     sed -i "/^[[:space:]]alias[[:space:]]\+$alias_name=/d" "$BASH_ALIASES"
@@ -68,10 +74,14 @@ for entry in "${ALIAS_MAPPING[@]}"; do
 done
 
 # Vérifier que le fichier aliases est appelé dans le .bashrc
-test_alias_token="1Ahc6Zal41-#"
+lout "Vérification de l'appel du fichier aliases dans le ~/.bashrc"
+test_alias_token=$(uuidgen)
+lout "Ajout du token de vérification"
 echo "TEST_ALIAS='$test_alias_token'" >> "$BASH_ALIASES"
 source "$HOME/.bashrc"
 if [ "$TEST_ALIAS" != "$test_alias_token" ]; then
-    echo 'source "$BASH_ALIASES"' >> "$HOME/.bashrc"
+    lout "Token non trouvé, ajout de $BASH_ALIASES au .bashrc"
+    echo "source \"$BASH_ALIASES\"" >> "$HOME/.bashrc" || fout "Impossible d'ajouter $BASH_ALIASES au .bashrc. Ajoutez la ligne de code : 'source \"$BASH_ALIASES\"' à votre ~/.bashrc"
 fi
+lout "Aliases pris en compte par le .bashrc, supression du token"
 sed -i "/TEST_ALIAS=/d" "$BASH_ALIASES"

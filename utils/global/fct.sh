@@ -67,3 +67,20 @@ fout() {
     echo "$1" >> "$logfile"
     exit 1
 }
+wout() {
+    parent_script="$(get_original_script)"
+    timestamp="$(timestamp)"
+
+    if [ -z "$1" ]; then
+        echo "fonction wout() : Aucun message passé." >&2
+        exit 1
+    fi
+    if [ -z "$LOG_DIR" ] || [ ! -d "$LOG_DIR" ]; then
+        logfile="./logs/$parent_script.log"
+    else
+        logfile="$LOG_DIR/$parent_script.log"
+    fi
+
+    echo "$1" >&2
+    echo "$1" >> "$logfile"
+}
