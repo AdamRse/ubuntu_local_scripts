@@ -52,18 +52,14 @@ cleanup_old_commands() {
     fi
 }
 cleanup_old_aliases() {
-    echo "=== Début de cleanup_old_aliases ==="
+    lout "Nettoyage des alias"
     local tmp_file
     tmp_file=$(mktemp)
-
-    echo "Fichier temporaire créé : $tmp_file"
-    echo "Fichier d'alias : $BASH_ALIASES"
 
     # Construire un tableau associatif des alias du .env
     declare -A env_aliases
     declare -A env_commands
 
-    echo "Parsing ALIAS_MAPPING du .env..."
     for entry in "${ALIAS_MAPPING[@]}"; do
         local name="${entry%%:*}"
         local command="${entry#*:}"
@@ -72,40 +68,32 @@ cleanup_old_aliases() {
         echo "  -> Alias '$name' = '$command'"
     done
 
-    echo "Lecture du fichier des alias..."
     while IFS= read -r line; do
         if [[ "$line" =~ ^alias[[:space:]]+([^=]+)=\"(.*)\"$ ]]; then
             local file_alias="${BASH_REMATCH[1]}"
             local file_command="${BASH_REMATCH[2]}"
-            echo "  > Trouvé : alias $file_alias=\"$file_command\""
 
             if [[ -n "${env_aliases[$file_alias]}" ]]; then
                 # Vérifie si commande identique
                 if [[ "${env_aliases[$file_alias]}" == "$file_command" ]]; then
-                    echo "    ✔ Alias valide (conservé)"
                     echo "$line" >> "$tmp_file"
-                else
-                    echo "    ✘ Alias '$file_alias' a changé de commande -> supprimé"
                 fi
             else
                 # Pas le même alias, mais commande identique ?
                 if [[ -n "${env_commands[$file_command]}" ]]; then
-                    echo "    ✘ Alias '$file_alias' périmé (même commande mais mauvais nom) -> supprimé"
+
                 else
-                    echo "    ✔ Alias utilisateur indépendant (conservé)"
                     echo "$line" >> "$tmp_file"
                 fi
             fi
         else
             # Ligne qui n'est pas un alias
-            echo "  > Ligne ignorée (pas un alias) : $line"
             echo "$line" >> "$tmp_file"
         fi
     done < "$BASH_ALIASES"
 
     echo "Écrasement de $BASH_ALIASES avec contenu nettoyé..."
     mv "$tmp_file" "$BASH_ALIASES"
-    echo "=== Fin de cleanup_old_aliases ==="
 }
 
 
