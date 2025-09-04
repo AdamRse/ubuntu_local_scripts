@@ -21,8 +21,98 @@ is_in_path() {
     done
     return 1
 }
+cleanup_old_commands() {
+    lout "Nettoyage des anciens liens symboliques"
+    
+    # Créer un tableau des commandes actuelles
+    local current_commands=()
+    for entry in "${COMMAND_MAPPING[@]}"; do
+        command_name="${entry%%:*}"
+        current_commands+=("$command_name")
+    done
+    
+    # Parcourir tous les fichiers dans LOCAL_BIN
+    if [ -d "$LOCAL_BIN" ]; then
+        for link_path in "$LOCAL_BIN"/*; do
+            # Vérifier si c'est un lien symbolique
+            if [ -L "$link_path" ]; then
+                link_name=$(basename "$link_path")
+                link_target=$(readlink -f "$link_path")
+                
+                # Vérifier si le lien pointe vers un script dans notre répertoire
+                if [[ "$link_target" == "$script_dir"/* ]]; then
+                    # Vérifier si le nom du lien n'est plus dans la configuration actuelle
+                    if ! printf '%s\n' "${current_commands[@]}" | grep -qx "$link_name"; then
+                        lout "Suppression de l'ancien lien symbolique: $link_name -> $link_target"
+                        rm -f "$link_path"
+                    fi
+                fi
+            fi
+        done
+    fi
+}
+cleanup_old_aliases() {
+    echo "=== Début de cleanup_old_aliases ==="
+    local tmp_file
+    tmp_file=$(mktemp)
 
-lout "Execution depuis $script_dir"
+    echo "Fichier temporaire créé : $tmp_file"
+    echo "Fichier d'alias : $BASH_ALIASES"
+
+    # Construire un tableau associatif des alias du .env
+    declare -A env_aliases
+    declare -A env_commands
+
+    echo "Parsing ALIAS_MAPPING du .env..."
+    for entry in "${ALIAS_MAPPING[@]}"; do
+        local name="${entry%%:*}"
+        local command="${entry#*:}"
+        env_aliases["$name"]="$command"
+        env_commands["$command"]="$name"
+        echo "  -> Alias '$name' = '$command'"
+    done
+
+    echo "Lecture du fichier des alias..."
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^alias[[:space:]]+([^=]+)=\"(.*)\"$ ]]; then
+            local file_alias="${BASH_REMATCH[1]}"
+            local file_command="${BASH_REMATCH[2]}"
+            echo "  > Trouvé : alias $file_alias=\"$file_command\""
+
+            if [[ -n "${env_aliases[$file_alias]}" ]]; then
+                # Vérifie si commande identique
+                if [[ "${env_aliases[$file_alias]}" == "$file_command" ]]; then
+                    echo "    ✔ Alias valide (conservé)"
+                    echo "$line" >> "$tmp_file"
+                else
+                    echo "    ✘ Alias '$file_alias' a changé de commande -> supprimé"
+                fi
+            else
+                # Pas le même alias, mais commande identique ?
+                if [[ -n "${env_commands[$file_command]}" ]]; then
+                    echo "    ✘ Alias '$file_alias' périmé (même commande mais mauvais nom) -> supprimé"
+                else
+                    echo "    ✔ Alias utilisateur indépendant (conservé)"
+                    echo "$line" >> "$tmp_file"
+                fi
+            fi
+        else
+            # Ligne qui n'est pas un alias
+            echo "  > Ligne ignorée (pas un alias) : $line"
+            echo "$line" >> "$tmp_file"
+        fi
+    done < "$BASH_ALIASES"
+
+    echo "Écrasement de $BASH_ALIASES avec contenu nettoyé..."
+    mv "$tmp_file" "$BASH_ALIASES"
+    echo "=== Fin de cleanup_old_aliases ==="
+}
+
+
+
+# ---------
+# PROGRAMME
+# ---------
 
 #Vérifications du PATH
 lout "Vérification du PATH"
@@ -55,6 +145,8 @@ for entry in "${COMMAND_MAPPING[@]}"; do
     chmod +x "$script_dir/$script_name"
     ln -sf "$script_dir/$script_name" "$LOCAL_BIN/$command_name" || wout "Impossible d'écrire le lien symbolique pour $command_name -> $script_name"
 done
+# Nettoyage d'anciennes commandes
+cleanup_old_commands
 
 # Ajout des Alias
 # Vérification de l'existance d'un fichier alias
@@ -75,6 +167,8 @@ for entry in "${ALIAS_MAPPING[@]}"; do
     # Ajouter le nouvel alias
     echo "alias $alias_name=\"$command_name\"" >> "$BASH_ALIASES"
 done
+# Nettoyage des ancien aliases
+cleanup_old_aliases
 
 # Vérifier que le fichier aliases est appelé dans le .bashrc
 lout "Vérification de l'appel du fichier aliases dans le ~/.bashrc"
