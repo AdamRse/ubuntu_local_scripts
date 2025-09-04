@@ -80,9 +80,7 @@ cleanup_old_aliases() {
                 fi
             else
                 # Pas le même alias, mais commande identique ?
-                if [[ -n "${env_commands[$file_command]}" ]]; then
-
-                else
+                if [[ ! -n "${env_commands[$file_command]}" ]]; then
                     echo "$line" >> "$tmp_file"
                 fi
             fi
