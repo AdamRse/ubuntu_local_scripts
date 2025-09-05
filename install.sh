@@ -8,21 +8,27 @@
 # Usage:       ./install.sh
 #===============================================================================
 
-source ./utils/global/fct.sh
+script_path=$(readlink -f "$0")
+script_dir=$(dirname "$script_path")
+
+source "$script_dir/utils/global/fct.sh"
+
+restart_after=false
 
 # -- ÉTAPE 1
-#Pour trouver le dossier home de l'utilisateur, même si le script est lancé en sudo
-if [ -n "$SUDO_USER" ]; then #On est en sudo
-    USER=$SUDO_USER
-    HOME_FOLDER="/home/$USER"
-    if ! [ -d "$HOME_FOLDER" ]; then # Le dossier perso n'a pas été trouvé
-        echo -e "Erreur, impossible de trouver le dossier /home/<user>, le nom d'utilisateur ne correspond à aucun répertoire de /home.\nRelancez le programme sans droits d'administrateur (sans sudo)."
-        exit 1
-    fi
+#Pour mieux gérer les variables d'environement, on ne doit pas lancer en sudo par défaut, mais seulement
+if [ -n "$SUDO_USER" ]; then # On est en sudo
+    fout "Le script ne doit pas être lancé en sudo (le mot de passe sudo sera ensuite demmandé pour gérer les variables d'environement)"
 else
     HOME_FOLDER=$HOME
-    $USER=$(whoami)
+    USER=$(whoami)
 fi
+sudo echo -e "----------------------------------\nLancement du script d'installation\n----------------------------------\n\n"
+
+if ask_yn "Pour prendre en compte les variables d'environement, l'ordinateur devra redémarrer. Autoriser le redémarrage à la fin de l'installation ? (refuser pour voir les logs)"; then
+    restart_after=true
+fi
+
 #Vérifier que git est installé avec un utilisateur valide
 git --version || { echo "Veuillez installer et configurer un utilisateur git."; exit 1; }
 ssh -T git@github.com
@@ -44,7 +50,7 @@ fi
 
 # -- ÉTAPE 2
 #On créé l'architecture perso et on déplace le répertoire local_scripts si besoin
-PATH_LOCAL_SCRIPTS="$HOME_FOLDER/dev/local_scripts"
+PATH_LOCAL_SCRIPTS="$HOME_FOLDER/dev/projets/local_scripts"
 PATH_REPOS_EXTERNES="$HOME_FOLDER/dev/repos_externes"
 # On vérifie si les répertoires ~/dev/local_scripts et ~/dev/repos_externes existent pour ranger des repo plus tard si besoin
 if [ -d "$PATH_LOCAL_SCRIPTS" ]; then
@@ -58,7 +64,7 @@ else
     REPOS_EXTERNES_EXISTS=false
 fi
 # On regarde si on doit respecter l'architecture ~/dev/
-if [ "$ARCHITECTURE_PERSO" = true ]; then
+if $ARCHITECTURE_PERSO; then
     # Gestion de ~/dev/repos_externes
     if ! [ "$REPOS_EXTERNES_EXISTS" = false ]; then
         mkdir -p "$PATH_REPOS_EXTERNES"
@@ -66,22 +72,22 @@ if [ "$ARCHITECTURE_PERSO" = true ]; then
     fi
         
     # Gestion de ~/dev/local_scripts
-    if ! [ $PWD == "$PATH_LOCAL_SCRIPTS" ]; then # Si le programme n'est pas executé dans ~/dev/local_scripts on cherchera à l'y placer (avec accord de l'utilisateur) sinon on est bien executé depuis le bon endroit
+    if ! [ $script_dir == "$PATH_LOCAL_SCRIPTS" ]; then # Si le programme n'est pas executé dans ~/dev/local_scripts on cherchera à l'y placer (avec accord de l'utilisateur) sinon on est bien executé depuis le bon endroit
         if [ $LOCAL_SCRIPTS_EXISTS ]; then # Si ~/dev/local_scripts existe, on attend une réponse de l'utilisateur, le script install n'est pas executé depuis ~/dev/local_scripts mais ~/dev/local_scripts existe. Faut-il l'écraser et prendre sa place ?
-            if ask_yn "Le répertoire '$PATH_LOCAL_SCRIPTS' existe déjà, mais le script est executé depuis '$PWD'. écraser '$PATH_LOCAL_SCRIPTS' pour y déplacer le repository de '$PWD' ?"; then
+            if ask_yn "Le répertoire '$PATH_LOCAL_SCRIPTS' existe déjà, mais le script est executé depuis '$script_dir'. écraser '$PATH_LOCAL_SCRIPTS' pour y déplacer le repository de '$script_dir' ?"; then
                 echo "Supression de '$PATH_LOCAL_SCRIPTS'"
                 sudo rm -rf $PATH_LOCAL_SCRIPTS
                 echo "Création du répertoire vide '$PATH_LOCAL_SCRIPTS'"
                 mkdir -p "$PATH_LOCAL_SCRIPTS"
                 echo "Déplacement dans le répertoire '$PATH_LOCAL_SCRIPTS'"
-                mv "$PWD" "$PATH_LOCAL_SCRIPTS"
+                mv "$script_dir" "$PATH_LOCAL_SCRIPTS"
                 LOCAL_SCRIPTS_EXISTS=true
             fi
         else # Si ~/dev/local_scripts n'existe pas on le créé et on bouge le repo dedans
             echo "Création du répertoire '$PATH_LOCAL_SCRIPTS'"
             mkdir -p "$PATH_LOCAL_SCRIPTS"
             echo "Déplacement dans le répertoire '$PATH_LOCAL_SCRIPTS'"
-            mv "$PWD" "$PATH_LOCAL_SCRIPTS"
+            mv "$script_dir" "$PATH_LOCAL_SCRIPTS"
             LOCAL_SCRIPTS_EXISTS=true
         fi
     fi
@@ -108,16 +114,27 @@ sudo apt install -y x11-xserver-utils pulseaudio pulseaudio-utils xdotool wmctrl
 
 
 # -- ÉTAPE 4
-# Ajout des alias
-cat >> $HOME_FOLDER/.config/aliases << 'EOF'
-# Alias local_scripts
-alias postman="nohup ~/dev/repos_externes/postman/postman-agent --no-sandbox >/dev/null 2>&1 &"
-alias a2new="sudo bash ~/dev/local_scripts/newApache2Project.sh"
-alias yt-dlp="python3 ~/dev/local_scripts/yt-dlp.py -P '~/Téléchargements/yt-dlp'"
-alias dns-update="bash ~/dev/local_scripts/hostsUpdater.sh"
-alias llm-context-file="bash ~/dev/local_scripts/llmContext.sh"
-EOF
-echo -e "\n# Source local aliases\nsource \"\$HOME/.config/aliases\"" >> ~/.bashrc
+# Ajout des commandes et alias
+lout "Lancement du script de commandes et aliases"
+chmod +x "$script_dir/updateCommand.sh"
+bash "$script_dir/updateCommand.sh"
+# Ajout de yt-dlp
+dlp_error=false
+if [ ! -f "$script_dir/yt-dlp.py" ] && [ ! -f "$script_dir/yt-dlp" ], then
+    lout "yt-dlp non trouvé, installation..."
+    wget -P "$script_dir" "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" || dlp_error=true
+    if $dlp_error; then
+        wout "Impossible de télécharger yt-dlp. Veillez télécharger le binaire sous le nom \"yt-dlp\" et l'ajouter au PATH avec les droits d'execution."
+    else
+        lout "Ajout des droits d'execution à $script_dir/yt-dlp"
+        chmod +x "$script_dir/yt-dlp"
+        if [ -n "$LOCAL_BIN"]; then
+            lout "Déplacement du yt-dlp vers $LOCAL_BIN"
+            mkdir -p "$LOCAL_BIN"
+            mv "$script_dir/yt-dlp" "$LOCAL_BIN"
+        fi
+    fi
+fi
 
 # -- ÉTAPE 5
 # Web devs tools
@@ -180,7 +197,7 @@ fi
 # -- ÉTAPE 6
 # Installation du reste utile
 echo "Mise a jour des dépendances"
-sudo apt install -y btop nginx steam snapd gimp vlc ufw tree python3 libreoffice kate ffmpeg filezilla composer usb-creator-gtk flatpak kde-config-flatpak
+sudo apt install -y btop nginx steam snapd gimp vlc ufw tree python3 libreoffice kate ffmpeg ffprobe filezilla composer usb-creator-gtk flatpak kde-config-flatpak
 sudo snap install --classic --no-prompt code
 
 # -- ÉTAPE 7

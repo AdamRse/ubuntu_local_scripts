@@ -12,4 +12,4 @@ source $script_dir/.env
 source $script_dir/utils/global/nas_fct.sh
 source $script_dir/utils/global/fct.sh
 
-lout "Test de lout"
+bash "$script_dir/updateCommand.sh"
