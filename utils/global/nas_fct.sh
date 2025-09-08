@@ -1,6 +1,10 @@
 #!/bin/bash
 
 mount_nas() {
+    if [ -z "$NAS_USER" ] || [ -z "$NAS_ADDR" ] || [ -z "$NAS_NAME" ]; then
+        echo "❌ Erreur : certaines variables NAS_* sont manquantes dans le .env"
+        return 1
+    fi
 
     NAS_MOUNT_POINT="/mnt/$NAS_NAME"
     NAS_PORT=${NAS_PORT:-22}
@@ -11,11 +15,6 @@ mount_nas() {
 \$NAS_ADDR=$NAS_ADDR\n\
 \$NAS_PORT=$NAS_PORT\n\
 \$NAS_NAME=$NAS_NAME"
-
-    if [ -z "$NAS_USER" ] || [ -z "$NAS_ADDR" ] || [ -z "$NAS_NAME" ]; then
-        echo "❌ Erreur : certaines variables NAS_* sont manquantes"
-        return 1
-    fi
 
     # Créer le dossier de montage
     sudo mkdir -p "$NAS_MOUNT_POINT"
