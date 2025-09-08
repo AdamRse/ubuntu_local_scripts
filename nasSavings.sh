@@ -1,11 +1,17 @@
 #!/bin/bash
 
-source .env
-source ./utils/global/fct.sh
-source ./utils/global/nas_fct.sh
+# Set
+script_path=$(readlink -f "$0")
+script_dir=$(dirname "$script_path")
 
+source $script_dir/.env
+source $script_dir/utils/global/nas_fct.sh
+source $script_dir/utils/global/fct.sh
+
+unmount_nas
 mount_nas || fout "Impossible de monter le NAS, arrêt du programme."
 
+echo "---------------------NAS SAVINGS-------------------------"
 # Traiter chaque paire de backup
 for pair in "${BACKUP_PAIRS[@]}"; do
     # Séparer la source et la destination
@@ -14,6 +20,11 @@ for pair in "${BACKUP_PAIRS[@]}"; do
     # Supprimer les espaces en début/fin si nécessaire
     source_pattern=$(echo "$source_pattern" | xargs)
     dest_dir=$(echo "$dest_dir" | xargs)
+
+    #On enlève le 1er "/"
+    if [[ "${dest_dir:0:1}" == "/" ]]; then
+        dest_dir="${dest_dir:1}"
+    fi
     
     # Construire le chemin de destination complet
     full_dest="${NAS_MOUNT_POINT%/}/${dest_dir%/}"
