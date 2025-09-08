@@ -1,15 +1,10 @@
 #!/bin/bash
 
 mount_nas() {
-# Vérifier si les variables nécessaires sont définies
-    if [ -z "$NAS_NAME" ] || [ -z "$NAS_USER" ] || [ -z "$NAS_ADDR" ]; then
-        echo "Erreur: Les variables NAS_NAME, NAS_USER et NAS_ADDR doivent être définies"
-        return 1
-    fi
 
     NAS_MOUNT_POINT="/mnt/$NAS_NAME"
-    NAS_PORT=${NAS_PORT:-22}  # Port SSH par défaut
-    
+    NAS_PORT=${NAS_PORT:-22}
+
     echo -e "Paramètres :\n\
 \$NAS_MOUNT_POINT=$NAS_MOUNT_POINT\n\
 \$NAS_USER=$NAS_USER\n\
@@ -17,61 +12,69 @@ mount_nas() {
 \$NAS_PORT=$NAS_PORT\n\
 \$NAS_NAME=$NAS_NAME"
 
-    # Récupération du mot de passe depuis le trousseau de clés
-    local keyring_entry="nas-$NAS_NAME-password"
-    
-    if [ -z "$NAS_PASSWORD" ]; then
-        echo "Mot de passe non trouvé dans le trousseau de clés."
-        read -rsp "Entrez le mot de passe pour $NAS_NAME: " NAS_PASSWORD
-        echo
-        
-    else
-        echo "Mot de passe récupéré depuis le .env"
-    fi
-
-    # Création du point de montage
-    echo "Création du point de montage dans $NAS_MOUNT_POINT"
-    if ! sudo mkdir -p "$NAS_MOUNT_POINT"; then
-        echo "Impossible de créer le point de montage."
-        return 1
-    fi
-    sudo chown adam:adam "$NAS_MOUNT_POINT"
-    echo "Point de montage créé"
-
-    # Montage avec SSHFS
-    echo "Tentative de montage du serveur NAS..."
-    if ! which sshpass >/dev/null; then
-        echo "Installation de sshpass nécessaire pour l'automatisation"
-        sudo apt-get install -y sshpass
-    fi
-
-    if sudo sshpass -p "$NAS_PASSWORD" sshfs \
-        -o allow_other,default_permissions,reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,compression=yes,cache_timeout=3600,password_stdin \
-        -p "$NAS_PORT" "$NAS_USER@$NAS_ADDR:/" "$NAS_MOUNT_POINT" <<<"$NAS_PASSWORD"; then
-        echo "Montage réussi!"
-    else
-        echo "Échec du montage du serveur NAS $NAS_NAME"
+    if [ -z "$NAS_USER" ] || [ -z "$NAS_ADDR" ] || [ -z "$NAS_NAME" ]; then
+        echo "❌ Erreur : certaines variables NAS_* sont manquantes"
         return 1
     fi
 
-    return 0
+    # Créer le dossier de montage
+    sudo mkdir -p "$NAS_MOUNT_POINT"
+    sudo chown $USER:$USER "$NAS_MOUNT_POINT"
+    sudo chmod 774 "$NAS_MOUNT_POINT"
+
+    # Vérifier si déjà monté
+    if mount | grep -q "$NAS_MOUNT_POINT"; then
+        echo "✅ NAS déjà monté sur $NAS_MOUNT_POINT"
+        return 0
+    fi
+
+    echo "⏳ Montage du NAS..."
+
+    # Lancer sshfs en arrière-plan, complètement détaché du terminal
+    setsid sshfs -p "$NAS_PORT" \
+        -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 \
+        "$NAS_USER@$NAS_ADDR:/" "$NAS_MOUNT_POINT" \
+        >/dev/null 2>&1 < /dev/null &
+
+    sleep 1
+
+    if mount | grep -q "$NAS_MOUNT_POINT"; then
+        echo "✅ NAS monté sur $NAS_MOUNT_POINT"
+    else
+        echo "❌ Échec du montage"
+        return 1
+    fi
 }
 
 unmount_nas() {
-    if [ -z "$NAS_MOUNT_POINT" ]; then
-        echo "Erreur: NAS_MOUNT_POINT doit être défini"
+    NAS_MOUNT_POINT="/mnt/$NAS_NAME"
+
+    echo -e "Paramètres :\n\
+\$NAS_MOUNT_POINT=$NAS_MOUNT_POINT\n\
+\$NAS_NAME=$NAS_NAME"
+
+    # Vérifier que la variable est définie
+    if [ -z "$NAS_NAME" ]; then
+        echo "❌ Erreur : variable NAS_NAME manquante"
         return 1
     fi
 
-    if [ ! -d "$NAS_MOUNT_POINT" ]; then
-        echo "Le point de montage est déjà démonté"
-    fi
-    
-    if sudo fusermount -u "$NAS_MOUNT_POINT"; then
-        echo "Démontage réussi de $NAS_MOUNT_POINT"
-        sudo rmdir "$NAS_MOUNT_POINT"
+    # Vérifier si le point de montage existe
+    if mount | grep -q "$NAS_MOUNT_POINT"; then
+        echo "⏳ Démontage du NAS..."
+        fusermount -u "$NAS_MOUNT_POINT" 2>/dev/null || sudo umount "$NAS_MOUNT_POINT"
+
+        sleep 1
+
+        if mount | grep -q "$NAS_MOUNT_POINT"; then
+            echo "❌ Échec du démontage"
+            return 1
+        else
+            echo "✅ NAS démonté de $NAS_MOUNT_POINT"
+            return 0
+        fi
     else
-        echo -e "Échec du démontage de $NAS_MOUNT_POINT.\nVérifier si un processus est en cours d'utilisation"
-        return 1
+        echo "ℹ️ Aucun NAS monté sur $NAS_MOUNT_POINT"
+        return 0
     fi
 }
