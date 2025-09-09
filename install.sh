@@ -110,7 +110,7 @@ fi
 # Installation des dépendance de local_scripts
 echo "Mise a jour des dépendances"
 sudo apt update
-sudo apt install -y x11-xserver-utils pulseaudio pulseaudio-utils xdotool wmctrl jq curl wget libnotify sshfs sshpass make
+sudo apt install -y x11-xserver-utils pulseaudio pulseaudio-utils xdg-utils xdotool wmctrl jq curl wget libnotify sshfs sshpass make
 
 
 # -- ÉTAPE 4
