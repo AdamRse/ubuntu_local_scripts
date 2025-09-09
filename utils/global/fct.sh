@@ -42,6 +42,52 @@ trim_slashes() {
     echo "$p"
 }
 
+# Fonction pour désactiver la veille (mais pas l'écran)
+disable_sleep() {
+    if command -v xdg-screensaver &> /dev/null; then
+        echo "Désactivation de la veille système..."
+        # Obtenir l'ID de la fenêtre active
+        local window_id
+        window_id=$(xdotool getactivewindow 2>/dev/null)
+        
+        if [ -n "$window_id" ]; then
+            xdg-screensaver suspend "$window_id"
+            echo "La veille est désactivée (l'écran peut toujours s'éteindre)"
+            return 0
+        else
+            echo "Erreur: Impossible d'obtenir l'ID de fenêtre"
+            echo "Installez xdotool: sudo apt install xdotool"
+            return 1
+        fi
+    else
+        echo "Erreur: xdg-screensaver n'est pas installé"
+        echo "Installez-le avec: sudo apt install xdg-utils"
+        return 1
+    fi
+}
+#Réactiver la mise en veille
+enable_sleep() {
+    if command -v xdg-screensaver &> /dev/null; then
+        echo "Réactivation de la veille système..."
+        # Obtenir l'ID de la fenêtre active
+        local window_id
+        window_id=$(xdotool getactivewindow 2>/dev/null)
+        
+        if [ -n "$window_id" ]; then
+            xdg-screensaver resume "$window_id"
+            echo "La veille est réactivée"
+            return 0
+        else
+            echo "Erreur: Impossible d'obtenir l'ID de fenêtre"
+            echo "Installez xdotool: sudo apt install xdotool"
+            return 1
+        fi
+    else
+        echo "Erreur: xdg-screensaver n'est pas installé"
+        return 1
+    fi
+}
+
 # Fonctions utiles
 ask_yn () {
     if [ -z "$1" ]; then

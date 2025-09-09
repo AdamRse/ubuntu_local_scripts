@@ -9,7 +9,7 @@ mount_nas() {
     NAS_MOUNT_POINT="/mnt/$NAS_NAME"
     NAS_PORT=${NAS_PORT:-22}
 
-    echo -e "Paramètres :\n\
+    $debug && echo -e "Paramètres :\n\
 \$NAS_MOUNT_POINT=$NAS_MOUNT_POINT\n\
 \$NAS_USER=$NAS_USER\n\
 \$NAS_ADDR=$NAS_ADDR\n\
@@ -48,7 +48,7 @@ mount_nas() {
 unmount_nas() {
     NAS_MOUNT_POINT="/mnt/$NAS_NAME"
 
-    echo -e "Paramètres :\n\
+    $debug && echo -e "Paramètres :\n\
 \$NAS_MOUNT_POINT=$NAS_MOUNT_POINT\n\
 \$NAS_NAME=$NAS_NAME"
 

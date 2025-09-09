@@ -9,7 +9,7 @@ source "$script_dir/utils/global/fct.sh"
 
 shopt -s globstar nullglob
 
-if [ $1 == "--debug" ]; then
+if [ "$1" == "--debug" ]; then
     debug=true
 else
     debug=false
@@ -18,6 +18,7 @@ fi
 # Programme
 unmount_nas
 mount_nas || fout "Impossible de monter le NAS, arrêt du programme."
+disable_sleep
 
 lout "=== Début de la sauvegarde ==="
 
@@ -78,6 +79,8 @@ for pair in "${BACKUP_PAIRS[@]}"; do
     done
 done
 
+
 lout "=== Sauvegarde terminée ==="
 lout "Démontage du NAS"
+enable_sleep
 unmount_nas
