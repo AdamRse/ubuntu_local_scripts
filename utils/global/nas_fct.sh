@@ -5,8 +5,9 @@ mount_nas() {
         echo "❌ Erreur : certaines variables NAS_* sont manquantes dans le .env"
         return 1
     fi
-
-    NAS_MOUNT_POINT="/mnt/$NAS_NAME"
+    if [ -z "$NAS_MOUNT_POINT" ]; then
+        NAS_MOUNT_POINT="/mnt/$NAS_NAME"
+    fi
     NAS_PORT=${NAS_PORT:-22}
 
     $debug && echo -e "Paramètres :\n\
@@ -46,17 +47,18 @@ mount_nas() {
 }
 
 unmount_nas() {
-    NAS_MOUNT_POINT="/mnt/$NAS_NAME"
+    if [ -z "$NAS_MOUNT_POINT" ]; then
+        if [ -z "$NAS_NAME" ]; then
+            echo "❌ Erreur : variable NAS_NAME manquante, impossible de déterminer le point de montage."
+            return 1
+        fi
+        NAS_MOUNT_POINT="/mnt/$NAS_NAME"
+    fi
+    NAS_PORT=${NAS_PORT:-22}
 
     $debug && echo -e "Paramètres :\n\
 \$NAS_MOUNT_POINT=$NAS_MOUNT_POINT\n\
 \$NAS_NAME=$NAS_NAME"
-
-    # Vérifier que la variable est définie
-    if [ -z "$NAS_NAME" ]; then
-        echo "❌ Erreur : variable NAS_NAME manquante"
-        return 1
-    fi
 
     # Vérifier si le point de montage existe
     if mount | grep -q "$NAS_MOUNT_POINT"; then
