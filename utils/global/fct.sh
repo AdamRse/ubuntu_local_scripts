@@ -28,6 +28,20 @@ if $LOG_ENABLE; then
     fi
 fi
 
+# Normaliser les chemins relatifs (enlever le slash de début et de fin pour être fusionnable)
+trim_slashes() {
+    local p="$1"
+    # enlever un slash leading s'il y en a un
+    if [[ "$p" == /* ]]; then
+        p="${p#/}"
+    fi
+    # enlever un slash trailing s'il y en a un
+    if [[ "$p" == */ ]]; then
+        p="${p%/}"
+    fi
+    echo "$p"
+}
+
 # Fonctions utiles
 ask_yn () {
     if [ -z "$1" ]; then
