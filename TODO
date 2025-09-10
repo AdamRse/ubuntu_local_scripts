@@ -1,1 +1,4 @@
-nasSavings : problèmes sur la récursivité, copie tout dans le niveau 1
+nasSavings : ajouter des options :
+    force yes : pas de confirmation des fichiers à copier
+    no stats : pas de compilation de stats
+    delete : supprime les fichiers après vérification de l'intégrité de la copie

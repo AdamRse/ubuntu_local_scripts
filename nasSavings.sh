@@ -26,6 +26,48 @@ lout "=== Début de la sauvegarde ==="
 nas_root="${NAS_MOUNT_POINT%/}"
 $debug && echo "NAS mount point normalisé : $nas_root"
 
+# Statistiques avant copie
+lout "⏳ Récupération des statistiques..."
+# Variables de stats
+stats_total_files=0
+stats_total_size=0
+for pair in "${BACKUP_PAIRS[@]}"; do
+    src="${pair%%:*}"   # partie gauche
+    dst="${pair#*:}"    # partie droite
+
+    # Expansion des fichiers (globbing)
+    files=( $src )
+
+    if [[ ${#files[@]} -eq 0 ]]; then
+        wout "   ⚠️ Aucun fichier trouvé pour $src_glob"
+        continue
+    fi
+
+    for f in "${files[@]}"; do
+        if [[ -f "$f" ]]; then
+            (( stats_total_files++ ))
+            (( stats_total_size += $(stat -c%s "$f") ))
+        fi
+    done
+done
+# Affichage des stats
+echo "Nombre total de fichiers : $stats_total_files"
+echo "Taille totale : $stats_total_size octets"
+
+# Confirmation du globbing
+if ! ask_yn "Copier ces fichiers sur le nas ?"; then
+    lout "Arrêt du script par l'utilisateur."
+    echo -e "-----------------------\n"
+    lout "Pour modification des fichiers à copier, se référer à BACKUP_PAIRS dans $script_dir/.env"
+    exit 0
+fi
+
+# Copie de fichiers
+lout "Lancement de la copie"
+local rsync_opts="-a --checksum"
+$debug && rsync_opts="-av --checksum"
+copy_total_files=0
+copy_total_size=0
 for pair in "${BACKUP_PAIRS[@]}"; do
     # séparation source:destination
     src_glob="${pair%%:*}"
@@ -41,7 +83,6 @@ for pair in "${BACKUP_PAIRS[@]}"; do
     # expansion des fichiers correspondant au glob
     files=( $src_glob )
     if [[ ${#files[@]} -eq 0 ]]; then
-        wout "   ⚠️ Aucun fichier trouvé pour $src_glob"
         continue
     fi
 
@@ -74,8 +115,13 @@ for pair in "${BACKUP_PAIRS[@]}"; do
             mkdir -p "$dest_dir" || { wout "   ❌ Impossible de créer $dest_dir"; continue; }
         fi
 
-        lout "   📥 Copie de $file → $dest_path"
-        cp -a "$file" "$dest_path" || wout "   ❌ Échec copie $file"
+        lout "   📥 Copie de $file → $dest_dir"
+        if ! rsync $rsync_opts "$file" "$dest_path"; then
+            wout "   ❌ Échec copie $file"
+        else
+            (( copy_total_files++ ))
+            (( copy_total_size += $(stat -c%s "$dest_path") ))
+        fi
     done
 done
 
@@ -84,3 +130,15 @@ lout "=== Sauvegarde terminée ==="
 lout "Démontage du NAS"
 enable_sleep
 unmount_nas
+
+lout "Fichiers copiés : $copy_total_files/$stats_total_files"
+lout "Taille totale : $stats_total_size/$stats_total_size octets"
+
+files_diff=$((stats_total_files - copy_total_files))
+size_diff=$((stats_total_size - stats_total_size))
+
+if [ $files_diff -eq 0 ] && [ $size_diff -eq 0 ]; then
+    lout "✅ Copie terminée avec succès."
+else
+    fout "❌ ÉCHEC PARTIEL. Fichiers manquants : $files_diff. Taille manquante : $size_diff octets"
+fi
