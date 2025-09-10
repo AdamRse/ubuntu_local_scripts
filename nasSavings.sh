@@ -9,12 +9,14 @@ source "$script_dir/utils/global/fct.sh"
 
 shopt -s globstar nullglob
 
+# Options
 if [ "$1" == "--debug" ]; then
     debug=true
 else
     debug=false
 fi
-checksum=true
+checksum=false
+delete_after=false
 
 # Programme
 unmount_nas
@@ -65,11 +67,17 @@ fi
 
 # Copie de fichiers
 lout "Lancement de la copie"
+
+# Calcul des options rsync
 rsync_opts="-a"
 $debug && rsync_opts="-av"
 if $checksum; then
-    rsync_opts+=" --checksum"
+    rsync_opts+="c"
+else
+    rsync_opts+=" --size-only"
 fi
+$delete_after && rsync_opts+=" --remove-source-files"
+
 $debug && echo "OPTIONS RSYNC : $rsync_opts"
 
 copy_total_files=0
