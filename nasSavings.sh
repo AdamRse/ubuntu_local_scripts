@@ -14,6 +14,7 @@ if [ "$1" == "--debug" ]; then
 else
     debug=false
 fi
+checksum=true
 
 # Programme
 unmount_nas
@@ -64,8 +65,13 @@ fi
 
 # Copie de fichiers
 lout "Lancement de la copie"
-local rsync_opts="-a --checksum"
-$debug && rsync_opts="-av --checksum"
+rsync_opts="-a"
+$debug && rsync_opts="-av"
+if $checksum; then
+    rsync_opts+=" --checksum"
+fi
+$debug && echo "OPTIONS RSYNC : $rsync_opts"
+
 copy_total_files=0
 copy_total_size=0
 for pair in "${BACKUP_PAIRS[@]}"; do
