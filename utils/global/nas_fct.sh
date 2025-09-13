@@ -44,6 +44,7 @@ mount_nas() {
         echo "❌ Échec du montage"
         return 1
     fi
+    return 0
 }
 
 unmount_nas() {

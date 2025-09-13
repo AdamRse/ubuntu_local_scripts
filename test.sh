@@ -8,6 +8,7 @@ source $script_dir/.env
 source $script_dir/utils/global/nas_fct.sh
 source $script_dir/utils/global/fct.sh
 
-disable_sleep
+mount_nas
+echo "------------------------------"
 sleep 1
-enable_sleep
+unmount_nas
