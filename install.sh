@@ -1,9 +1,9 @@
 #!/bin/bash
 
-############### OPTIONS
+# ############## OPTIONS
 restart_after=false
 
-############### VARS, Utilisées dans le script
+# ############## VARS, Utilisées dans le script
 home_folder=""
 user_name=""
 user_group=""
@@ -15,12 +15,12 @@ is_install_docker=false
 is_install_dev=false
 is_install_code=false
 
-############### CONST
+# ############## CONST
 RED="\e[31m"
 YELLOW="\e[33m"
 ENDCOLOR="\e[0m"
 
-############### FUNTIONS
+# ############## FUNTIONS
 ask_yn () {
     if [ -z "$1" ]; then
         echo "fonction ask_yn() : Aucun paramètre passé" >&2
@@ -70,14 +70,20 @@ wout() {
     echo -e "${YELLOW}Attention : $1${ENDCOLOR}" >&2
 }
 
-############### CHECKS
+# ############## CHECKS
+lout "---------------------\nCHECK\n---------------------"
+
 user_name="$(logname)"
 user_group="$(id -gn ${user_name})"
 home_folder="$(getent passwd ${user_name} | cut -d: -f6)"
 
 [ -z "$user_name" ] && fout "Nom d'utilisateur non trouvé"
-[ -z "$user_group" ] && fout "Groupe principal de l'utilisateur ${$user_name} non trouvé"
-[ -z "$home_folder" ] && [ -d "$home_folder" ] && fout "Dossier home de l'utilisateur ${$user_name} non trouvé"
+[ -z "$user_group" ] && fout "Groupe principal de l'utilisateur ${user_name} non trouvé"
+[ -z "$home_folder" ] && [ -d "$home_folder" ] && fout "Dossier home de l'utilisateur ${user_name} non trouvé"
+
+lout "Utilisateur : ${user_name}\n\
+    Groupe principal : ${user_group}\n\
+    Répertoire home : ${home_folder}"
 
 lout "\nTest de connexion à github"
 ssh -T git@github.com 2>/dev/null
@@ -90,8 +96,21 @@ else
     wout "Aucune connexion GitHub via SSH détectée"
     is_github_auth=false
 fi
+set_users_permissions() { # A TESTER
+    [ -z "$1" ] && fout "fonction set_permissions() : Aucun paramètre 1 passé."
+    recursive=" "
+    if [ -z "$2" ] && $2; then
+        recursive="-R "
+    fi
 
-############### ASK OPTIONS
+    sudo chmod "${recursive}"775 "$1" && sudo chown "${recursive}""${user_name}:${user_group}" "$1"
+}
+
+# ############## ASK OPTIONS
+lout "---------------------\nPREPARATION\n---------------------"
+lout "Les questions sont posées au début, le reste du script s'executera seul."
+sudo echo ""
+
 ask_yn "Installer des features de développement web ?" && is_install_dev=true
 if is_install_dev; then
     ask_yn "Installer l'architecture '/home/dev' pour les projets github ?" && is_dev_architecture=true
@@ -104,4 +123,30 @@ if is_install_dev; then
 fi
 ask_yn "Installer un environement de jeu vidéo ?" && is_gaming=true
 
-############### MAIN
+# ############## MAIN
+
+lout "---------------------\nINSTALLATION\n---------------------"
+
+# DEV WEB #
+
+# Architecture globale
+if $is_install_dev; then
+    # création du fichier d'alias
+    dir_config="${home_folder}/.config"
+    file_alias="${dir_config}/alias"
+    if [ ! -f "$file_alias" ]; then
+        mkdir -p "${dir_config}"
+        set_users_permissions "${dir_config}" true
+        echo -e "# Liste des alias de commande bash pour ${home_folder}/.bashrc\n\
+        alias ll='ls -la'" > "${file_alias}"
+    fi
+    echo "source '${file_alias}'" >> "${home_folder}/.bashrc"
+fi
+
+# Architecture /home/dev
+if $is_dev_architecture; then
+    dir_projects="${home_folder}/dev/projets"
+
+    mkdir -p "${dir_projects}"
+    set_users_permissions "${home_folder}/dev" true
+fi
