@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Dépendance : .env, utils/screenManager/screenManagerFcts.sh
+# Dépendance : .env, ./utils/screenManager/screenManagerFcts.sh
 
 # CHECKS
 # Accès répertoire de config

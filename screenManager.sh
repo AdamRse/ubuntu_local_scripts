@@ -11,12 +11,17 @@
 
 # CONFIG
 set -e
+script_path=$(readlink -f "$0")
+script_dir=$(dirname "$script_path")
+
+source "$script_dir/.env"
+source "$script_dir/utils/global/fct.sh"
 
 # SOURCES
-source ./.env
-source ./utils/global/fct.sh
-source ./utils/screenManager/screenManagerSetFcts.sh # Dépendance à .env
-source ./utils/screenManager/screenManagerChecks.sh # Dépendance à .env, screenManagerSetFcts.sh 
+source "$script_dir/.env"
+source "$script_dir/utils/global/fct.sh"
+source "$script_dir/utils/screenManager/screenManagerSetFcts.sh" # Dépendance à .env
+source "$script_dir/utils/screenManager/screenManagerChecks.sh" # Dépendance à .env, screenManagerSetFcts.sh 
 
 echo "TEST"
 save_config_file
