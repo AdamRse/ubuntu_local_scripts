@@ -11,6 +11,9 @@ is_github_auth=false
 is_dev_architecture=false
 is_gaming=false
 is_set_github=false
+is_install_docker=false
+is_install_dev=false
+is_install_code=false
 
 ############### CONST
 RED="\e[31m"
@@ -76,22 +79,29 @@ home_folder="$(getent passwd ${user_name} | cut -d: -f6)"
 [ -z "$user_group" ] && fout "Groupe principal de l'utilisateur ${$user_name} non trouvé"
 [ -z "$home_folder" ] && [ -d "$home_folder" ] && fout "Dossier home de l'utilisateur ${$user_name} non trouvé"
 
-lout "\n\nTest de connexion à github\n"
-
-ssh -T git@github.com
+lout "\nTest de connexion à github"
+ssh -T git@github.com 2>/dev/null
 github_status=$?
-if [ $github_status -eq 1 ]; then
+
+if [ "$github_status" -eq 1 ]; then
     lout "Authentification GitHub détectée"
     is_github_auth=true
 else
-    wout "Aucune connexion github via SSH détectée"
+    wout "Aucune connexion GitHub via SSH détectée"
+    is_github_auth=false
 fi
 
 ############### ASK OPTIONS
-ask_yn "Installer l'architecture '/home/dev' pour les projets github ?" && is_dev_architecture=true
+ask_yn "Installer des features de développement web ?" && is_install_dev=true
+if is_install_dev; then
+    ask_yn "Installer l'architecture '/home/dev' pour les projets github ?" && is_dev_architecture=true
+    ask_yn "Installer Docker ?" && is_install_docker=true
+    ask_yn "Installer les packages de code (PHP, Node.js, Nginx...) ?" && is_install_code=true
+    if ! $is_github_auth; then
+        ask_yn "Si vous souhaitez paramétrer une connexion github, ajoutez vos clés SSH dans '$home_folder/.ssh' avec le nom '$user_name@github', validez ensuite votre réponse ici :\
+            \nParamétrer github maintenant ?" && is_set_github=true
+    fi
+fi
 ask_yn "Installer un environement de jeu vidéo ?" && is_gaming=true
-ask_yn "Si vous souhaitez paramétrer une connexion github, ajoutez vos clés SSH dans '$home_folder/.ssh' avec le nom $user_name@github, validez ensuite votre réponse ici :\
-\nParamétrer github maintenant ?" && is_set_github=true
-
 
 ############### MAIN
