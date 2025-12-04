@@ -69,6 +69,14 @@ wout() {
 
     echo -e "${YELLOW}Attention : $1${ENDCOLOR}" >&2
 }
+set_users_permissions() {
+    [ -z "$1" ] && fout "fonction set_permissions() : Aucun paramètre 1 passé."
+    if [ -n "$2" ] && $2; then
+        sudo chmod -R 775 "$1" && sudo chown -R "adam:adam" "$1"
+    else
+        sudo chmod 775 "$1" && sudo chown "adam:adam" "$1"
+    fi
+}
 
 # ############## CHECKS
 lout "---------------------\nCHECK\n---------------------"
@@ -96,15 +104,6 @@ else
     wout "Aucune connexion GitHub via SSH détectée"
     is_github_auth=false
 fi
-set_users_permissions() { # A TESTER
-    [ -z "$1" ] && fout "fonction set_permissions() : Aucun paramètre 1 passé."
-    recursive=" "
-    if [ -z "$2" ] && $2; then
-        recursive="-R "
-    fi
-
-    sudo chmod "${recursive}"775 "$1" && sudo chown "${recursive}""${user_name}:${user_group}" "$1"
-}
 
 # ############## ASK OPTIONS
 lout "---------------------\nPREPARATION\n---------------------"
