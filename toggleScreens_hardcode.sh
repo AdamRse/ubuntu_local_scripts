@@ -1,11 +1,16 @@
 #!/bin/bash
 
+# HDMI-0 : écran central
+# DP-1   : écran gauche
+# DP-5   : écran droite
+# DP-3   : TV
+
 mode_bureau() {
     # écrans
-    xrandr --output "HDMI-0" --primary --mode "2560x1080" --auto --right-of "DP-1" # central
-    xrandr --output "DP-1" --mode "1920x1080" --auto --left-of "HDMI-0" # gauche
-    xrandr --output "DP-5" --mode "1920x1080" --auto --right-of "HDMI-0" # droite
-    xrandr --output "DP-3" --off # TV
+    xrandr --output "DP-1" --mode "1920x1080" --pos 0x0 \
+        --output "HDMI-0" --mode "2560x1080" --primary --right-of "DP-1" \
+        --output "DP-5" --mode "1920x1080" --right-of "HDMI-0" \
+        --output "DP-3" --off
 
     # audio
     audio_sink_desk=$(pactl list short sinks | grep analog | awk '{print $1}')
@@ -18,10 +23,10 @@ mode_bureau() {
 
 mode_gaming() {
     # écrans
-    xrandr --output "HDMI-0" --off # central
-    xrandr --output "DP-1" --off # gauche
-    xrandr --output "DP-5" --off # droite
-    xrandr --output "DP-3" --primary --mode "1920x1080" --auto # TV
+    xrandr --output "DP-1" --off \
+        --output "HDMI-0" --off \
+        --output "DP-5" --off \
+        --output "DP-3" --mode "1920x1080" --primary
 
     # audio
     audio_sink_tv=$(pactl list short sinks | grep hdmi | awk '{print $1}')
