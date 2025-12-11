@@ -104,9 +104,9 @@ set_users_permissions() {
         permission="$2"
     fi
     if [ -n "$3" ] && $3; then
-        sudo chmod -R "${permission}" "$1" && sudo chown -R "adam:adam" "$1"
+        sudo chmod -R "${permission}" "$1" && sudo chown -R "${user_name}:${user_group}" "$1"
     else
-        sudo chmod "${permission}" "$1" && sudo chown "adam:adam" "$1"
+        sudo chmod "${permission}" "$1" && sudo chown "${user_name}:${user_group}" "$1"
     fi
 }
 
