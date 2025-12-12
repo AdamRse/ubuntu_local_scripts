@@ -55,6 +55,7 @@ lout() {
     echo -e "$1"
     return 0
 }
+
 fout() {
     if [ -z "$1" ]; then
         echo -e "${RED}fonction fout() : Aucun message passé.${ENDCOLOR}" >&2
@@ -64,6 +65,7 @@ fout() {
     echo -e "${RED}Erreur : $1${ENDCOLOR}" >&2
     exit 1
 }
+
 wout() {
     if [ -z "$1" ]; then
         echo -e "${RED}fonction wout() : Aucun message passé.${ENDCOLOR}" >&2
@@ -72,6 +74,7 @@ wout() {
 
     echo -e "${YELLOW}Attention : $1${ENDCOLOR}" >&2
 }
+
 title_section() {
     if [ -z "$1" ]; then
         echo -e "${YELLOW}fonction title_section() : Aucun message passé.${ENDCOLOR}" >&2
@@ -96,17 +99,20 @@ title_section() {
             ;;
     esac
 }
+
+#set_users_permissions "<target>" "[permission numérique]" "Bool:[is_recursive]"
 set_users_permissions() {
     [ -z "$1" ] && fout "fonction set_permissions() : Aucun paramètre 1 passé."
-    if [ -z "$2" ]; then
-        permission="775"
-    else
+    local path="$1"
+    local permission="775"
+
+    if [ -n "$2" ]; then
         permission="$2"
     fi
     if [ -n "$3" ] && $3; then
-        sudo chmod -R "${permission}" "$1" && sudo chown -R "${user_name}:${user_group}" "$1"
+        sudo chmod -R "${permission}" "$path" && sudo chown -R "${user_name}:${user_group}" "$path"
     else
-        sudo chmod "${permission}" "$1" && sudo chown "${user_name}:${user_group}" "$1"
+        sudo chmod "${permission}" "$path" && sudo chown "${user_name}:${user_group}" "$path"
     fi
 }
 
