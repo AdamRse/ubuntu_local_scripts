@@ -4,6 +4,7 @@ script_path=$(readlink -f "$0")
 script_dir=$(dirname "$script_path")
 
 source "$script_dir/.env"
+source "$script_dir/utils/global/terminal-tools.fct.sh"
 source "$script_dir/utils/global/nas_fct.sh"
 source "$script_dir/utils/global/fct.sh"
 
@@ -19,7 +20,6 @@ checksum=false
 delete_after=false
 
 # Programme
-unmount_nas
 mount_nas || fout "Impossible de monter le NAS, arrêt du programme."
 disable_sleep
 

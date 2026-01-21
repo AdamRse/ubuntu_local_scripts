@@ -6,6 +6,7 @@ script_dir=$(dirname "$script_path")
 
 # Sources
 source $script_dir/.env
+source "$script_dir/utils/global/terminal-tools.fct.sh"
 source $script_dir/utils/global/fct.sh
 
 # Fonctions
