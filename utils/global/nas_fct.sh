@@ -37,13 +37,21 @@ mount_nas() {
     }
     # Le NAS est en ligne, mais pas forcément disponible immédiatement (sortie de veille, ou allumage)
     lout "⏳ Montage de ${NAS_NAME}..."
-    sshfs "${NAS_USER}@${NAS_ADDR}:/" -p "${NAS_PORT}" "${nas_mount_point}" -o Ciphers=aes128-ctr,compression=no,reconnect
+    if sshfs "${NAS_USER}@${NAS_ADDR}:/" -p "${NAS_PORT}" "${nas_mount_point}" -o Ciphers=aes128-ctr,compression=no,reconnect; then
+        sout "${NAS_NAME} monté dans ${nas_mount_point}"
+        return 0
+    else
+        fout "Impossible de monter ${NAS_NAME}, sshfs retourne une erreur."
+        return 1
+    fi
 }
 
 # $1 : nas_mount_point  : chemin absolu du point de montage du nas
 # return bool
 is_nas_mounted() {
     local nas_mount_point="${1}"
+    [ -z "${nas_mount_point}" ] && eout "is_nas_mounted() : Aucun argument passé, chemin absolu du point de montage attentu."
+    [ -d "${nas_mount_point}" ] || eout "is_nas_mounted() : Mauvais argument, aucun répertoire trouvé dans '${nas_mount_point}'. Vérifiez l'argument passé ou les droits du répertoire."
     mountpoint -q "${nas_mount_point}"
 }
 
