@@ -35,7 +35,7 @@ lout(){
 sout(){
     local message=$1
     [ -z "${message}" ] && echo "sout() : Aucun paramètre passé pour message" >&2
-    local tag="${S_SUCCESS}[ :D ]${S_END}"
+    local tag="${S_SUCCESS}[ OK ]${S_END}"
     echo -e "${tag}\t${message} ${S_SUCCESS}✓${S_END}"
 
     if $LOG_ENABLE; then

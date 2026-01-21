@@ -2,14 +2,13 @@
 
 mount_nas() {
     local nas_port=${NAS_PORT:-22}
-    local nas_mount_point="$(clean_path_variable "absolute" "${NAS_MOUNT_DIR}/${NAS_NAME}")"
+    local nas_mount_point="$(clean_path_variable "absolute" "${NAS_MOUNT_POINT}")"
     local timeout_sec=${NAS_TIMEOUT_SEC:-15}
     [ -z "${NAS_USER}" ] && eout "Variable 'NAS_USER' manquante dans le .env (Nom d'utilisateur pour se connecter au NAS)"
     [ -z "${NAS_ADDR}" ] && eout "Variable 'NAS_ADDR'manquante dans le .env (Adresse IP ou nom de domaine du NAS)"
     [ -z "${NAS_NAME}" ] && eout "Variable 'NAS_NAME' manquante dans le .env (Nom du NAS)"
     [ -z "${NAS_MAC_ADDR}" ] && eout "Variable 'NAS_MAC_ADDR' manquante dans le .env (adresse mac de l'interface réseau)"
-    [ -z "${NAS_MOUNT_DIR}" ] && eout "Variable 'NAS_MOUNT_DIR' manquante dans le .env (Répertoire utilisateur dans lequel créer le point de montage)"
-    [ -d "${NAS_MOUNT_DIR}" ] || eout "Le point de montage spécifié dans le .env 'NAS_MOUNT_DIR' n'existe pas ou n'est pas accessible."
+    [ -z "${NAS_MOUNT_POINT}" ] && eout "Variable 'NAS_MOUNT_POINT' manquante dans le .env (Répertoire utilisateur dans lequel créer le point de montage)"
     [ -z "${NAS_TIMEOUT_SEC}" ] && wout "Variable 'NAS_TIMEOUT_SEC' manquante dans le .env (Temps de démarrage du NAS avec marge de sécurité). timeout par défaut : ${timeout_sec} secondes."
     [ -z "${NAS_PORT}" ] && wout "Variable 'NAS_PORT' manquante dans le .env (Numéro de port pour se connecter en SSH). Port par défaut : ${nas_port}."
 
@@ -25,7 +24,7 @@ mount_nas() {
         return 0
     }
     is_empty_dir "${nas_mount_point}" || {
-        fout "Le point de montage calculé '${nas_mount_point}' n'est pas vide. Il semblerait que ce ne soit pas le NAS qui soit monté à cet endroit. Avandon..."
+        fout "Le point de montage '${nas_mount_point}' n'est pas vide. Il semblerait que ce ne soit pas le NAS qui soit monté à cet endroit. Avandon..."
         return 1
     }
     mkdir -p "${nas_mount_point}" || {
@@ -60,7 +59,7 @@ wake_and_wait_ping() {
     [ -z "${timout_sec}" ] && wout "wake_and_wait_ping() : aucun timeout donné, le timeout par défaut est fixé à ${timout_sec} secondes"
     [ -z "${NAS_MAC_ADDR}" ] && eout "Variable 'NAS_MAC_ADDR' manquante dans le .env (adresse mac de l'interface réseau)"
     [[ $mac_addr =~ $regex_mac ]] || eout "La variable 'NAS_MAC_ADDR' dans le .env n'est pas une adresse mac valide"
-    [[ $timout_sec =~ "[0-9]+" ]] || eout "wake_and_wait_ping() : Le paramètre 'timout_sec' passé à la fonction en premier paramètre n'est pas un nombre."
+    [[ $timout_sec =~ ^[0-9]+$ ]] || eout "wake_and_wait_ping() : Le paramètre 'timout_sec' passé à la fonction en premier paramètre n'est pas un nombre : '${timout_sec}'"
 
     if ping -c 1 -W 1 "${ip}" > /dev/null 2>&1; then
         lout "Le NAS est en ligne"
@@ -89,10 +88,10 @@ wake_and_wait_ping() {
     return 1
 }
 unmount_nas() {
-    local nas_mount_point="$(clean_path_variable "absolute" "${NAS_MOUNT_DIR}/${NAS_NAME}")"
+    local nas_mount_point="$(clean_path_variable "absolute" "${NAS_MOUNT_POINT}")"
     [ -z "${NAS_NAME}" ] && eout "Variable 'NAS_NAME' manquante dans le .env (Nom du NAS)"
-    [ -z "${NAS_MOUNT_DIR}" ] && eout "Variable 'NAS_MOUNT_DIR' manquante dans le .env (Répertoire utilisateur dans lequel créer le point de montage)"
-    [ -d "${NAS_MOUNT_DIR}" ] || eout "Le point de montage spécifié dans le .env 'NAS_MOUNT_DIR' n'existe pas ou n'est pas accessible."
+    [ -z "${NAS_MOUNT_POINT}" ] && eout "Variable 'NAS_MOUNT_POINT' manquante dans le .env (Répertoire utilisateur dans lequel créer le point de montage)"
+    [ -d "${NAS_MOUNT_POINT}" ] || eout "Le point de montage spécifié dans le .env 'NAS_MOUNT_POINT' n'existe pas ou n'est pas accessible."
 
     debug_ "Paramètres :
     \$nas_mount_point=${nas_mount_point}
