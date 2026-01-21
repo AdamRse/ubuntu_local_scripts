@@ -66,7 +66,7 @@ cleanup_old_aliases() {
         local command="${entry#*:}"
         env_aliases["${name}"]="${command}"
         env_commands["${command}"]="${name}"
-        echo "  -> Alias '$nam{e' = '${command}'"
+        echo "  -> Alias '${name}' = '${command}'"
     done
 
     while IFS= read -r line; do
@@ -82,7 +82,7 @@ cleanup_old_aliases() {
             else
                 # Pas le même alias, mais commande identique ?
                 if [[ ! -n "${env_commands[${file_command}]}" ]]; then
-                    echo "${line}" >> "$tmp_{file"
+                    echo "${line}" >> "${tmp_file}"
                 fi
             fi
         else

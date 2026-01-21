@@ -1,6 +1,0 @@
-alias postman="nohup $PJ/repos_externes/postman/postman-agent --no-sandbox >/dev/null 2>&1 &"
-alias ping-test="ping 5.39.77.77"
-alias vps-down="sudo wg-quick down wg0"
-alias vps-up="sudo wg-quick up wg0"
-alias vps-test="sudo wg show"
-alias yt-dlp-cvlc="yt-dlp -P '/home/adam/Musique/cvlc' -f m4a"
