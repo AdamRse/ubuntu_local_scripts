@@ -66,7 +66,7 @@ cleanup_old_aliases() {
         local command="${entry#*:}"
         env_aliases["${name}"]="${command}"
         env_commands["${command}"]="${name}"
-        echo "  -> Alias '${name}' = '${command}'"
+        debug_ "  -> Alias '${name}' = '${command}'"
     done
 
     while IFS= read -r line; do
@@ -91,7 +91,7 @@ cleanup_old_aliases() {
         fi
     done < "${BASH_ALIASES}"
 
-    echo "Écrasement de ${BASH_ALIASES} avec contenu nettoyé..."
+    lout "Écrasement de ${BASH_ALIASES} avec contenu nettoyé..."
     mv "${tmp_file}" "${BASH_ALIASES}"
 }
 
@@ -127,7 +127,7 @@ for entry in "${COMMAND_MAPPING[@]}"; do
     command_name="${entry%%:*}"
     script_name="${entry#*:}"
 
-    lout "Ajout de la commande : ${command_name} -> ${script_name}"
+    debug_ "Ajout de la commande : ${command_name} -> ${script_name}"
     
     chmod +x "${script_dir}/${script_name}"
     ln -sf "${script_dir}/${script_name}" "${LOCAL_BIN}/${command_name}" || wout "Impossible d'écrire le lien symbolique pour ${command_name} -> ${script_name}"
@@ -146,7 +146,7 @@ for entry in "${ALIAS_MAPPING[@]}"; do
     # Séparer au premier ":" seulement
     alias_name="${entry%%:*}"
     command_name="${entry#*:}"
-    lout "Ajout de l'alias ${alias_name}=\"${command_name}\""
+    debug_ "Ajout de l'alias ${alias_name}=\"${command_name}\""
     
     # Supprimer l'alias existant s'il y en a un
     sed -i "/^[[:space:]]*alias[[:space:]]\+${alias_name}=/d" "${BASH_ALIASES}"
