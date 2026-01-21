@@ -1,12 +1,17 @@
 #!/bin/bash
 
-script_path=$(readlink -f "$0")
-script_dir=$(dirname "$script_path")
+SCRIPT_PATH=$(readlink -f "$0")
+SCRIPT_DIR=$(dirname "$SCRIPT_PATH")
+COMMAND_NAME="locs-nas-save"
 
-source "$script_dir/.env"
-source "$script_dir/utils/global/terminal-tools.fct.sh"
-source "$script_dir/utils/global/nas_fct.sh"
-source "$script_dir/utils/global/fct.sh"
+source "${SCRIPT_DIR}/utils/requirments/nas.req.sh"
+source "${SCRIPT_DIR}/.env"
+source "${SCRIPT_DIR}/utils/global/terminal-tools.fct.sh"
+source "${SCRIPT_DIR}/utils/global/nas_fct.sh"
+source "${SCRIPT_DIR}/utils/global/fct.sh"
+
+source "${SCRIPT_DIR}/utils/argument_set/nas-Savings.getopt.sh"
+
 
 shopt -s globstar nullglob
 
@@ -60,7 +65,7 @@ echo "Taille totale : $stats_total_size octets"
 # Confirmation du globbing
 if ! ask_yn "Copier ces fichiers sur le nas ?"; then
     lout "Arrêt du script par l'utilisateur."
-    lout "Pour modification des fichiers à copier, se référer à BACKUP_PAIRS dans $script_dir/.env"
+    lout "Pour modification des fichiers à copier, se référer à BACKUP_PAIRS dans $SCRIPT_DIR/.env"
     exit 0
 fi
 

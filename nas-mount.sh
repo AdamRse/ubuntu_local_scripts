@@ -2,9 +2,10 @@
 
 SCRIPT_PATH=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT_PATH")
-COMMAND_NAME="nas-mount"
+COMMAND_NAME="locs-nas-mount"
 MOUNT=""
 
+source "$SCRIPT_DIR/utils/requirments/nas.req.sh"
 source "$SCRIPT_DIR/.env"
 source "$SCRIPT_DIR/utils/global/terminal-tools.fct.sh"
 source "$SCRIPT_DIR/utils/global/nas_fct.sh"

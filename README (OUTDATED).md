@@ -1,13 +1,3 @@
-Debian requirments : sudo apt install uuid-runtime
-Pour utiliser uuidgen dans updateCommand
-
-le script ajoute aussi cette ligne dans .profile :
-PATH="$PATH:$LOCAL_BIN"
-
-Au lieu du contenu de la variable .env
-
-wakeonlan non vérifié
-
 > [!WARNING]
 > Compatibilité Linux seulement
 # REQUIREMENTS
