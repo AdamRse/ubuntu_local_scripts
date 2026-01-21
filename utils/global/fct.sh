@@ -28,6 +28,45 @@ if $LOG_ENABLE; then
     fi
 fi
 
+# $1 : mode     : relative|absolute
+# $2 : path     : 
+# return string : path nettoyé
+clean_path_variable(){
+    local mode="${1}"
+    local path="${2}"
+    if [ -n "${path}" ]; then
+        local relative="relative"
+        local absolute="absolute"
+        path=$(echo "$path" | tr -s '/')
+        if [ "${mode}" = "${relative}" ]; then
+            path="${path#/}"
+            path="${path%/}"
+        elif [ "${mode}" = "${absolute}" ]; then
+            path="/${path#/}"
+            path="${path%/}"
+        else
+            eout "clean_path_variable() : Erreur, mode non conforme passé en 1er paramètre. Attendu : '${relative}' ou '${absolute}'"
+        fi
+    fi
+    echo "$path"
+}
+
+# Utilisable avec pipe
+# $1 : dir  : chemin absolu du répertoire
+# return bool
+is_empty_dir(){
+    local dir="${1-$(cat)}"
+    [ -z "${dir}" ] && eout "is_empty_dir() : Aucun paramètre donné. Passer le chemin absolu d'un répertoire à tester en paramètre."
+    [ -d "${dir}" ] || return 0
+
+    if [ -z "$(find "$dir" -mindepth 1 -maxdepth 1 -print -quit)" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+
 # Normaliser les chemins relatifs (enlever le slash de début et de fin pour être fusionnable)
 trim_slashes() {
     local p="$1"
@@ -85,62 +124,5 @@ enable_sleep() {
     else
         echo "Erreur: xdg-screensaver n'est pas installé"
         return 1
-    fi
-}
-
-# Fonctions utiles
-ask_yn () {
-    if [ -z "$1" ]; then
-        echo -e "fonction ask_yn() : Aucun paramètre passé" >&2
-        exit 1
-    fi
-
-    while true; do
-    read -n 1 -p "$1 (o/n)" response
-    echo ""
-    # Vérification de la réponse
-    if [[ $response == "o" || $response == "O" ]]; then
-        return 0
-    elif [[ $response == "n" || $response == "N" ]]; then
-        return 1
-    else
-        echo -e "'$response' : Réponse invalide. Veuillez entrer 'o' (Oui) ou 'n' (Non)."
-    fi
-done
-}
-
-lout() {
-    if [ -z "$1" ]; then
-        echo "fonction lout() : Aucun message passé." >&2
-        return 1
-    fi
-
-    echo "$1"
-    if $LOG_ENABLE; then
-        echo "$timestamp $1" >> "$logfile"
-    fi
-    return 0
-}
-fout() {
-    if [ -z "$1" ]; then
-        echo "fonction fout() : Aucun message passé." >&2
-        exit 1
-    fi
-
-    echo "Erreur : $1" >&2
-    if $LOG_ENABLE; then
-        echo "$timestamp ERROR : $1" >> "$logfile"
-    fi
-    exit 1
-}
-wout() {
-    if [ -z "$1" ]; then
-        echo "fonction wout() : Aucun message passé." >&2
-        exit 1
-    fi
-
-    echo "Attention : $1" >&2
-    if $LOG_ENABLE; then
-        echo "$timestamp WARNING : $1" >> "$logfile"
     fi
 }
