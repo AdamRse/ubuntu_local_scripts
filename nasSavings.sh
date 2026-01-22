@@ -3,6 +3,7 @@
 SCRIPT_PATH=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT_PATH")
 COMMAND_NAME="locs-nas-save"
+DEBUG_MODE=false
 
 source "${SCRIPT_DIR}/utils/requirments/nas.req.sh"
 source "${SCRIPT_DIR}/.env"
@@ -16,11 +17,6 @@ source "${SCRIPT_DIR}/utils/argument_set/nas-Savings.getopt.sh"
 shopt -s globstar nullglob
 
 # Options
-if [ "$1" == "--debug" ]; then
-    DEBUG_MODE=true
-else
-    DEBUG_MODE=false
-fi
 checksum=false
 delete_after=false
 
