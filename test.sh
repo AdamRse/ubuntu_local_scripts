@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Set
-script_path=$(readlink -f "$0")
-script_dir=$(dirname "$script_path")
+SCRIPT_PATH=$(readlink -f "$0")
+SCRIPT_DIR=$(dirname "${SCRIPT_PATH}")
 
-source $script_dir/.env
-source $script_dir/utils/global/terminal-tools.fct.sh
-source $script_dir/utils/global/nas_fct.sh
-source $script_dir/utils/global/fct.sh
+source "${SCRIPT_DIR}/.env"
+source "${SCRIPT_DIR}/utils/global/terminal-tools.fct.sh"
+source "${SCRIPT_DIR}/utils/global/nas_fct.sh"
+source "${SCRIPT_DIR}/utils/global/fct.sh"
 
 DEBUG_MODE=true
