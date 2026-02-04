@@ -2,7 +2,7 @@
 
 SCRIPT_PATH=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT_PATH")
-COMMAND_NAME="locs-nas-save"
+COMMAND_NAME="$(basename "$0")"
 DEBUG_MODE=false
 
 source "${SCRIPT_DIR}/utils/requirments/nas.req.sh"
