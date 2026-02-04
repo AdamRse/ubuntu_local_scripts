@@ -1,8 +1,9 @@
 #!/bin/bash
 
-SCRIPT_PATH=$(readlink -f "$0")
-SCRIPT_DIR=$(dirname "$SCRIPT_PATH")
-COMMAND_NAME="locs-nas-mount"
+SCRIPT_PATH="$(readlink -f "$0")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+COMMAND_NAME="$(basename "$0")"
+
 MOUNT=""
 
 source "$SCRIPT_DIR/utils/requirments/nas.req.sh"

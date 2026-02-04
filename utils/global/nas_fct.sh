@@ -13,11 +13,11 @@ mount_nas() {
     [ -z "${NAS_PORT}" ] && wout "Variable 'NAS_PORT' manquante dans le .env (Numéro de port pour se connecter en SSH). Port par défaut : ${nas_port}."
 
     debug_ "Paramètres :
-\$nas_mount_point=$nas_mount_point
-\$NAS_USER=$NAS_USER
-\$NAS_ADDR=$NAS_ADDR
-\$nas_port=$nas_port
-\$NAS_NAME=$NAS_NAME"
+    - \$nas_mount_point=$nas_mount_point
+    - \$NAS_USER=$NAS_USER
+    - \$NAS_ADDR=$NAS_ADDR
+    - \$nas_port=$nas_port
+    - \$NAS_NAME=$NAS_NAME"
 
     is_nas_mounted "${nas_mount_point}" && {
         lout "NAS déjà monté sur ${nas_mount_point}"
