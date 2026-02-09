@@ -19,22 +19,11 @@ mount_nas() {
     - \$nas_port=$nas_port
     - \$NAS_NAME=$NAS_NAME"
 
-    is_nas_mounted "${nas_mount_point}" && {
-        lout "NAS déjà monté sur ${nas_mount_point}"
-        return 0
-    }
-    is_empty_dir "${nas_mount_point}" || {
-        fout "Le point de montage '${nas_mount_point}' n'est pas vide. Il semblerait que ce ne soit pas le NAS qui soit monté à cet endroit. Avandon..."
-        return 1
-    }
-    mkdir -p "${nas_mount_point}" || {
-        fout "Impossible de monter le serveru NAS sur '${nas_mount_point}', permission refusée."
-        return 1
-    }
-    wake_and_wait_ping "${timeout_sec}" || {
-        fout "Le NAS ne répond pas à l'adresse ${NAS_ADDR} donnée."
-        return 1
-    }
+    is_nas_mounted "${nas_mount_point}" && lout "NAS déjà monté sur ${nas_mount_point}" && return 0
+    ! is_empty_dir "${nas_mount_point}" && fout "Le point de montage '${nas_mount_point}' n'est pas vide. Il semblerait que ce ne soit pas le NAS qui soit monté à cet endroit. Avandon..." && return 1
+    mkdir -p "${nas_mount_point}" && fout "Impossible de monter le serveru NAS sur '${nas_mount_point}', permission refusée." && return 1
+    wake_and_wait_ping "${timeout_sec}" && fout "Le NAS ne répond pas à l'adresse ${NAS_ADDR} donnée." && return 1
+    
     # Le NAS est en ligne, mais pas forcément disponible immédiatement (sortie de veille, ou allumage)
     lout "⏳ Montage de ${NAS_NAME}..."
     if sshfs "${NAS_USER}@${NAS_ADDR}:/" -p "${NAS_PORT}" "${nas_mount_point}" -o Ciphers=aes128-ctr,compression=no,reconnect; then
